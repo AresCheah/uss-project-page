@@ -126,7 +126,7 @@ export const siteContent = {
   links: [
     { label: "PDF", href: publicAsset("/assets/docs/USS_paper_copy.pdf") },
     { label: "arXiv", href: "#", pending: true },
-    { label: "Code", href: "https://github.com/AresCheah/uss-project-page" },
+    { label: "Code", href: "#", pending: true },
   ] satisfies LinkItem[],
   logos: [
     {
