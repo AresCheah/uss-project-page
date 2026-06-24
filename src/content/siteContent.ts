@@ -42,6 +42,8 @@ export type DemoItem = {
   videoSrc?: string;
 };
 
+const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 export const pageSections = [
   { id: "motivation", label: "Motivation" },
   { id: "contributions", label: "Contributions" },
@@ -55,50 +57,50 @@ const demoItems: DemoItem[] = [
     title: "Similar People: Semantic Prompt Failure",
     tag: "Failure case",
     description: "A language-only instruction points to the right category but fails to disambiguate the intended person in a crowded scene.",
-    poster: "/assets/posters/demo-01.jpg",
-    videoSrc: "/assets/videos/demo-01.mp4",
+    poster: publicAsset("/assets/posters/demo-01.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-01.mp4"),
   },
   {
     title: "Similar People: Spatial Prompt Success A",
     tag: "Spatial prompt",
     description: "A point or box prompt anchors the exact person and preserves target identity through ego-motion and distractors.",
-    poster: "/assets/posters/demo-02.jpg",
-    videoSrc: "/assets/videos/demo-02.mp4",
+    poster: publicAsset("/assets/posters/demo-02.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-02.mp4"),
   },
   {
     title: "Similar People: Spatial Prompt Success B",
     tag: "Spatial prompt",
     description: "Another successful similar-people run showing more stable lock-on with explicit spatial target cues.",
-    poster: "/assets/posters/demo-03.jpg",
-    videoSrc: "/assets/videos/demo-03.mp4",
+    poster: publicAsset("/assets/posters/demo-03.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-03.mp4"),
   },
   {
     title: "Long Route",
     tag: "Long-horizon",
     description: "The tracker follows the target across a longer indoor route with turns and evolving viewpoints.",
-    poster: "/assets/posters/demo-04.jpg",
-    videoSrc: "/assets/videos/demo-04.mp4",
+    poster: publicAsset("/assets/posters/demo-04.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-04.mp4"),
   },
   {
     title: "Stationary Distractor",
     tag: "Distractor analysis",
     description: "The robot keeps attention on the intended target despite nearby irrelevant but visually salient distractors.",
-    poster: "/assets/posters/demo-05.jpg",
-    videoSrc: "/assets/videos/demo-05.mp4",
+    poster: publicAsset("/assets/posters/demo-05.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-05.mp4"),
   },
   {
     title: "Pedestrian Distractor",
     tag: "Crowded scene",
     description: "USS maintains target identity when unrelated pedestrians cross the trajectory and compete for attention.",
-    poster: "/assets/posters/demo-06.jpg",
-    videoSrc: "/assets/videos/demo-06.mp4",
+    poster: publicAsset("/assets/posters/demo-06.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-06.mp4"),
   },
   {
     title: "Narrow Corridor",
     tag: "Robust deployment",
     description: "A constrained hallway scenario demonstrating stable following under limited maneuvering space.",
-    poster: "/assets/posters/demo-07.jpg",
-    videoSrc: "/assets/videos/demo-07.mp4",
+    poster: publicAsset("/assets/posters/demo-07.jpg"),
+    videoSrc: publicAsset("/assets/videos/demo-07.mp4"),
   },
 ];
 
@@ -131,16 +133,16 @@ export const siteContent = {
     {
       name: "NTU",
       label: "Nanyang Technological University",
-      src: "/assets/logos/ntu-from-a2a.jpeg",
+      src: publicAsset("/assets/logos/ntu-from-a2a.jpeg"),
     },
     {
       name: "MARS Lab",
       label: "MARS Lab",
-      src: "/assets/logos/marslab-from-a2a.jpeg",
+      src: publicAsset("/assets/logos/marslab-from-a2a.jpeg"),
     },
   ],
   motivation: {
-    image: "/assets/figures/motivation.png",
+    image: publicAsset("/assets/figures/motivation.png"),
     eyebrow: "Motivation",
     title: "Text is expressive, but it is not always precise enough for embodied tracking.",
     body: [
@@ -174,7 +176,7 @@ export const siteContent = {
     },
   ] satisfies Contribution[],
   method: {
-    image: "/assets/figures/method.png",
+    image: publicAsset("/assets/figures/method.png"),
     modules: [
       {
         title: "Input Encoding",
