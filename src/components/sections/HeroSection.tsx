@@ -87,6 +87,12 @@ export default function HeroSection() {
               <a
                 key={link.label}
                 href={link.href}
+                target={link.href.startsWith("http") || link.href.endsWith(".pdf") ? "_blank" : undefined}
+                rel={
+                  link.href.startsWith("http") || link.href.endsWith(".pdf")
+                    ? "noreferrer"
+                    : undefined
+                }
                 className="group inline-flex min-w-[120px] items-center justify-center gap-2.5 rounded-[12px] border border-slate-200 bg-white px-4 py-2.5 text-[0.95rem] text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
                 <FileText className="h-4 w-4 text-slate-400" />

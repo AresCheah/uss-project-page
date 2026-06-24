@@ -4,7 +4,7 @@ export type Author = {
 };
 
 export type LinkItem = {
-  label: "Paper" | "arXiv" | "Code" | "Demo";
+  label: "PDF" | "arXiv" | "Code";
   href: string;
   pending?: boolean;
 };
@@ -124,10 +124,9 @@ export const siteContent = {
     { name: "Jianfei Yang", note: "corresponding" },
   ] satisfies Author[],
   links: [
-    { label: "Paper", href: "#bibtex", pending: true },
-    { label: "arXiv", href: "#bibtex", pending: true },
-    { label: "Code", href: "#method", pending: true },
-    { label: "Demo", href: "#demos", pending: true },
+    { label: "PDF", href: publicAsset("/assets/docs/USS_paper_copy.pdf") },
+    { label: "arXiv", href: "#", pending: true },
+    { label: "Code", href: "https://github.com/AresCheah/uss-project-page" },
   ] satisfies LinkItem[],
   logos: [
     {
@@ -323,7 +322,7 @@ export const siteContent = {
   demos: demoItems,
   bibtex: `@article{uss2026,
   title={USS: Unified Spatial-Semantic Prompts for Embodied Visual Tracking with Latent Dynamics Learning},
-  author={Xie, Yuchen and Zhou, Xinyu and Zuo, Kuangji and Lu, Yanshuo and Huang, Fengrui and Ma, Boyu and Yang, Jianfei},
+  author={Yuchen Xie and Xinyu Zhou and Kuangji Zuo and Yanshuo Lu and Fengrui Huang and Boyu Ma and Jianfei Yang},
   journal={Preprint},
   year={2026}
 }`,
