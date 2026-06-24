@@ -12,9 +12,11 @@ export default function SectionIntro({ title, description }: SectionIntroProps) 
         <h2 className="font-display text-[1.75rem] font-semibold leading-[1.18] text-slate-900 sm:text-[2.15rem]">
           {title}
         </h2>
-        <p className="mx-auto max-w-3xl text-[1rem] leading-8 text-slate-600">
-          {description}
-        </p>
+        {description ? (
+          <p className="mx-auto max-w-3xl text-[1rem] leading-8 text-slate-600">
+            {description}
+          </p>
+        ) : null}
       </div>
     </div>
   );

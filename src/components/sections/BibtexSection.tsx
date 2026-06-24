@@ -15,19 +15,11 @@ export default function BibtexSection() {
           index="06"
           eyebrow="Citation"
           title="BibTeX"
-          description="Paper links can be dropped in later, but the citation block is ready now."
+          description=""
         />
 
         <div className="mx-auto max-w-5xl panel p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
-                BibTeX
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                Replace the venue and year fields later if the final publication record changes.
-              </p>
-            </div>
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={copyBibtex}
@@ -38,7 +30,7 @@ export default function BibtexSection() {
             </button>
           </div>
 
-          <pre className="mt-6 overflow-x-auto rounded-[24px] bg-[#091018] p-6 font-mono text-sm leading-7 text-slate-200">
+          <pre className="mt-4 overflow-x-auto rounded-[24px] bg-[#091018] p-6 font-mono text-sm leading-7 text-slate-200">
             <code>{siteContent.bibtex}</code>
           </pre>
         </div>
