@@ -125,7 +125,7 @@ export const siteContent = {
   ] satisfies Author[],
   links: [
     { label: "PDF", href: publicAsset("/assets/docs/USS_paper_copy.pdf") },
-    { label: "arXiv", href: "#", pending: true },
+    { label: "arXiv", href: "http://arxiv.org/abs/2606.25880" },
     { label: "Code", href: "#", pending: true },
   ] satisfies LinkItem[],
   logos: [
