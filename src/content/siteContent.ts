@@ -320,10 +320,10 @@ export const siteContent = {
     "On EVT-Bench, USS establishes a strong accuracy-efficiency frontier: it is state-of-the-art among non-MLLM methods and remains dramatically faster than recent MLLM-based trackers.",
   ],
   demos: demoItems,
-  bibtex: `@article{uss2026,
+  bibtex: `@article{xie2026ussunifiedspatialsemanticprompts,
   title={USS: Unified Spatial-Semantic Prompts for Embodied Visual Tracking with Latent Dynamics Learning},
   author={Yuchen Xie and Xinyu Zhou and Kuangji Zuo and Yanshuo Lu and Fengrui Huang and Boyu Ma and Jianfei Yang},
-  journal={Preprint},
+  journal={arXiv preprint arXiv:2606.25880},
   year={2026}
 }`,
 };
