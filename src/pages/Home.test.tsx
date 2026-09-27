@@ -7,18 +7,14 @@ describe("Home page", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /Unified Spatial-Semantic Prompts for Embodied Visual Tracking/i,
+        name: /Unifying Spatial-Semantic Prompting for End to End Embodied Visual Tracking/i,
       }),
     ).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: /Motivation/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: /One architecture that turns heterogeneous prompts into egocentric waypoints/i,
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /Seven real-robot slots ready for your final videos/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Motivation$/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Method$/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^Experiments$/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Real-World Experiments/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Simulation Benchmark/i })).toBeInTheDocument();
   });
 });

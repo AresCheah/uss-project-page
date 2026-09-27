@@ -105,13 +105,13 @@ const demoItems: DemoItem[] = [
 ];
 
 export const siteContent = {
-  title: "USS: Unified Spatial-Semantic Prompts for Embodied Visual Tracking with Latent Dynamics Learning",
+  title: "USS: Unifying Spatial-Semantic Prompting for End to End Embodied Visual Tracking",
   tagline:
-    "A project page for embodied visual tracking that moves beyond text-only target indication and lets robots follow who you describe, point to, box, or mask.",
+    "A project page for embodied visual tracking in which text, a point, a box, and a mask are complementary ways to designate the target, and the prompt is chosen to fit the scenario.",
   shortAbstract:
-    "USS unifies text, point, bounding box, and mask prompts in one end-to-end tracker, and combines prompt-aware perception with latent dynamics learning for robust, low-latency embodied following.",
+    "USS maps text, point, bounding box, and mask prompts directly to egocentric waypoints in one end-to-end architecture, with temporal memory, cross-view fusion, and an auxiliary latent predictor used only during training.",
   abstract: [
-    "Embodied Visual Tracking (EVT) requires an agent to continuously follow a specified target while actively moving through dynamic environments. However, prevailing EVT paradigms predominantly rely on language-based target indication. While language is expressive and convenient, cluttered scenes often contain multiple objects that satisfy the same semantic description, leading to ambiguous target grounding. We therefore propose a paradigm shift, reframing target indication in EVT from text-only specification to unified spatial-semantic prompting. Based on this paradigm, we introduce Unified Spatial-Semantic Prompts for Embodied Visual Tracking with Latent Dynamics Learning, USS, an end-to-end embodied tracking framework that supports text, point, bounding box, and mask prompts within a unified architecture. USS encodes heterogeneous prompts with modality-specific encoders, fuses prompt tokens with visual features through hybrid attention, and decodes compact prompt-conditioned representations into egocentric waypoints. To further improve temporal robustness, USS incorporates a latent world model that predicts future representations through self-supervised alignment. Real-robot experiments demonstrate that explicit spatial target cues yield higher success rates than text-only prompts, particularly in scenarios involving similar distractors and longer-horizon tracking where maintaining instance-level target identity is critical. In the simulation benchmark, USS also achieves state-of-the-art performance among non-MLLM-based methods and competitive results against recent MLLM-based approaches with faster inference speed. Our findings reveal that spatial-semantic prompting provides a more precise and flexible target indication interface for embodied visual tracking.",
+    "Embodied Visual Tracking (EVT) requires an agent to continuously follow a designated target while moving through dynamic environments. Existing embodied tracking methods generally rely on either an implicit target-selection convention or a language description, leaving the target-specification interface largely fixed. However, different tracking scenarios naturally favor different forms of target specification: language can specify a target outside the robot's current view, whereas spatial prompts provide direct instance designation for visible targets and can be useful for selecting among similar-looking people, designating hard-to-describe individuals, or specifying a target under time pressure. We therefore introduce unified spatial-semantic prompting for EVT, in which text, a point, a box, and a mask serve as complementary target specifications that can be selected according to different scenarios, and present USS, an end-to-end architecture that maps any of them to egocentric waypoints. A modality-specific prompt encoder feeds a common design comprising hybrid-attention fusion, temporal memory, cross-view aggregation, latent prediction, and waypoint decoding, with one policy instance trained for each interface under an identical recipe. Across 320 zero-shot real-robot trials with policies trained only in simulation, spatial prompts perform comparably to language in ordinary tracking scenarios while providing clear benefits when visually similar targets require precise instance designation, supporting our premise that different scenarios favor different target specifications. On simulation EVT-Bench under the standard language-prompt protocol, USS obtains the highest success rate among non-MLLM methods at 57 FPS, against the 4.8–10 FPS reported by MLLM trackers that are stronger on several metrics.",
   ],
   institution: "Nanyang Technological University",
   authors: [
@@ -143,66 +143,67 @@ export const siteContent = {
   motivation: {
     image: publicAsset("/assets/figures/motivation.png"),
     eyebrow: "Motivation",
-    title: "Text is expressive, but it is not always precise enough for embodied tracking.",
+    title: "Different scenarios favor different ways of specifying the target.",
     body: [
-      "Most embodied visual tracking systems assume the user always specifies a target with language. That is convenient, but cluttered scenes often contain several objects or people that fit the same description.",
-      "USS reframes the interface itself: instead of asking the policy to infer the exact instance from semantics alone, it accepts unified spatial-semantic prompts so the robot can lock onto the intended target from the very beginning.",
+      "Embodied visual tracking systems are usually tied to one target-specification interface: an implicit selection convention, or a language description. But the right interface depends on the situation. Language can name a target that is not even in view, while a spatial prompt designates a visible instance directly.",
+      "A spatial prompt is useful exactly where a description struggles: telling apart people who look alike, pointing at something hard to describe concisely, or selecting a target under time pressure. Its own requirement is that the target be visible when the prompt is given. USS treats these interfaces as complementary rather than competing, and conditions one end-to-end policy on whichever one fits.",
     ],
     bullets: [
-      "Language-only prompts break down when similar distractors satisfy the same description.",
-      "Point, box, and mask prompts inject instance-level evidence with minimal extra interaction.",
-      "Reducing ambiguity at the start of tracking improves every downstream closed-loop decision.",
+      "Language reaches targets outside the current view; a spatial prompt needs the target to be visible.",
+      "A point, box, or mask designates one physical instance directly, without a description that may fit several people.",
+      "The prompt is supplied once at initialization, encoded once, and conditions the policy for the rest of the episode.",
     ],
   },
   contributions: [
     {
-      title: "A new prompting paradigm",
+      title: "Unified spatial-semantic prompting for EVT",
       summary:
-        "USS treats text, point, box, and mask as first-class target specifications, shifting EVT from language-only indication to unified spatial-semantic prompting.",
-      keywords: ["Prompt interface", "Instance grounding", "Closed-loop tracking"],
+        "Target specification is formulated as a scenario-dependent choice among complementary interfaces — language, point, bounding box, and mask — rather than one fixed interface assumed in advance.",
+      keywords: ["Prompt interface", "Instance designation", "Closed-loop tracking"],
     },
     {
-      title: "One unified tracking architecture",
+      title: "One end-to-end architecture for all four prompts",
       summary:
-        "Modality-specific prompt encoders, hybrid attention fusion, sparse waypoint decoding, and a latent world model work together in one efficient end-to-end framework.",
+        "Modality-specific prompt encoding, hybrid-attention fusion, temporal memory, cross-view aggregation, and sparse-query waypoint prediction, with an action-conditioned latent predictor used only during training.",
       keywords: ["Hybrid attention", "Waypoint policy", "Latent dynamics"],
     },
     {
-      title: "Strong real-world validation",
+      title: "Validation on a physical robot and on EVT-Bench",
       summary:
-        "USS reaches state-of-the-art performance among non-MLLM approaches, stays competitive with recent MLLM trackers, and runs fast enough for real-time deployment.",
-      keywords: ["Real robot", "EVT-Bench", "Fast inference"],
+        "320 zero-shot real-robot trials with simulation-only policies, plus the highest success rate among non-MLLM methods on EVT-Bench under the standard language-prompt protocol, at 57 FPS.",
+      keywords: ["Real robot", "EVT-Bench", "Real-time inference"],
     },
   ] satisfies Contribution[],
   method: {
     image: publicAsset("/assets/figures/method.png"),
     modules: [
       {
-        title: "Input Encoding",
-        text: "USS first converts text, bounding box, point, and mask prompts into modality-aware representations, so different target specifications can enter one shared tracking pipeline.",
+        title: "Prompt Encoding",
+        text: "Text, bounding box, point, and mask prompts are encoded once at initialization by modality-specific encoders, so a single designation conditions the whole episode without being recomputed per frame.",
       },
       {
-        title: "Vision-Prompt Alignment",
-        text: "Prompt tokens are aligned with dense visual features through hybrid attention, letting the model read relevant evidence, write target-conditioned cues back, and form compact prompt-aware representations.",
+        title: "Vision-Prompt Fusion with Memory",
+        text: "Prompt tokens and learnable queries exchange information with dense visual features in a read-write-read attention pattern, while a sliding memory bank and cross-view aggregation hold the target through ego-motion and brief occlusions.",
       },
       {
         title: "Waypoint Prediction Head",
-        text: "A lightweight decoder maps the aligned sparse representations to future egocentric waypoints and visibility signals, enabling responsive closed-loop tracking.",
+        text: "A shared transformer decoder turns the sparse prompt-conditioned state into future egocentric waypoints and per-view target-presence logits, so only the first waypoint has to be executed each control step.",
       },
       {
         title: "Action-Conditioned World Model",
-        text: "During training, USS predicts future latent states with an action-conditioned world model, strengthening temporal consistency and motion awareness without extra inference cost.",
+        text: "During training, USS predicts the next latent state conditioned on its own predicted waypoints and aligns it with a detached EMA target instead of reconstructing pixels. The predictor is discarded at inference, so it adds no runtime cost.",
       },
     ],
   },
   highlightStats: [
     { value: "86.7%", label: "STT success with box prompts" },
     { value: "83.6%", label: "DT success with box prompts" },
-    { value: "72 FPS", label: "Peak non-MLLM inference speed" },
-    { value: "90%", label: "Real-world similar-people SR with box prompts" },
+    { value: "57 FPS", label: "Language policy on an RTX 4090" },
+    { value: "18/20", label: "Similar-people trials with box prompts, vs 9/20 for language" },
   ],
   realWorldTable: {
-    caption: "Real-world success rate across four indoor tracking scenes.",
+    caption:
+      "Real-world success rate across four indoor tracking scenes. 20 trials per scene and prompt type, 320 in total, all zero-shot with simulation-trained single-view policies.",
     columns: ["Text", "BBox", "Point", "Mask"],
     rows: [
       { label: "Narrow corridor", values: ["100%", "100%", "100%", "100%"] },
@@ -219,10 +220,13 @@ export const siteContent = {
         values: ["45%", { value: "90%", emphasis: "bold" }, "80%", "70%"],
       },
     ],
+    notes: [
+      "The prompt types behave similarly except where a distractor shares most of the target's described attributes. In the similar-people scene both candidates wear a black top and only the trousers differ, so the description still identifies the target uniquely and a language failure there is a grounding failure.",
+    ],
   } satisfies TableData,
   benchmarkTable: {
     caption:
-      "Performance on EVT-Bench. STT, DT, and AT denote Single-Target, Distracted, and Ambiguity Tracking. Results are reported as SR/TR/CR, where SR and TR are higher, and CR is lower.",
+      "EVT-Bench results. STT, DT, and AT denote Single-Target, Distracted, and Ambiguity Tracking, reported as SR/TR/CR, where SR and TR are higher and CR is lower.",
     columns: [
       "STT SR",
       "STT TR",
@@ -236,13 +240,13 @@ export const siteContent = {
       "FPS",
     ],
     rows: [
-      { type: "group", label: "Non-MLLM-based methods" },
+      { type: "group", label: "Modular language-prompt baselines (non-MLLM)" },
       {
         label: "IBVS†",
-        values: ["42.9", "56.2", "3.75", "10.6", "28.4", "6.14", "15.2", { value: "39.5", emphasis: "red" }, { value: "4.90", emphasis: "red" }, "6.0"],
+        values: ["42.9", "56.2", "3.75", "10.6", "28.4", { value: "6.14", emphasis: "red" }, "15.2", { value: "39.5", emphasis: "red" }, { value: "4.90", emphasis: "red" }, "--"],
       },
       {
-        label: "PoliFormer",
+        label: "PoliFormer†",
         values: ["4.67", "15.5", "40.1", "2.62", "13.2", "44.5", "3.04", "15.4", "41.5", "--"],
       },
       {
@@ -256,27 +260,39 @@ export const siteContent = {
       {
         label: "USS (language)",
         labelEmphasis: "bold",
-        values: ["70.8", "72.1", "3.13", "49.8", "54.6", "9.89", { value: "34.2", emphasis: "red" }, "35.8", "28.2", "37.0"],
+        values: [
+          { value: "70.8", emphasis: "red" },
+          { value: "72.1", emphasis: "red" },
+          { value: "3.13", emphasis: "red" },
+          { value: "49.8", emphasis: "red" },
+          { value: "54.6", emphasis: "red" },
+          "9.89",
+          { value: "34.2", emphasis: "red" },
+          "35.8",
+          "28.2",
+          { value: "57.0", emphasis: "red" },
+        ],
       },
+      { type: "group", label: "USS spatial-prompt variants (visible-target initialization; separate protocol)" },
       {
         label: "USS (point)",
         labelEmphasis: "bold",
-        values: ["83.4", "86.8", "3.02", "79.8", "80.2", { value: "2.92", emphasis: "red" }, "--", "--", "--", "68.0"],
+        values: ["83.4", "86.8", "3.02", "79.8", "80.2", { value: "2.92", emphasis: "bold" }, "--", "--", "--", "68.0"],
       },
       {
         label: "USS (mask)",
         labelEmphasis: "bold",
-        values: ["81.3", "80.8", "6.65", "75.8", "76.3", "3.04", "--", "--", "--", { value: "72.0", emphasis: "red" }],
+        values: ["81.3", "80.8", "6.65", "75.8", "76.3", "3.04", "--", "--", "--", { value: "72.0", emphasis: "bold" }],
       },
       {
         label: "USS (box)",
         labelEmphasis: "bold",
         values: [
-          { value: "86.7", emphasis: "red" },
-          { value: "92.2", emphasis: "red" },
-          { value: "2.73", emphasis: "red" },
-          { value: "83.6", emphasis: "red" },
-          { value: "81.5", emphasis: "red" },
+          { value: "86.7", emphasis: "bold" },
+          { value: "92.2", emphasis: "bold" },
+          { value: "2.73", emphasis: "bold" },
+          { value: "83.6", emphasis: "bold" },
+          { value: "81.5", emphasis: "bold" },
           "2.93",
           "--",
           "--",
@@ -284,44 +300,60 @@ export const siteContent = {
           "65.0",
         ],
       },
-      { type: "group", label: "MLLM-based methods" },
+      { type: "group", label: "MLLM-based language-prompt methods" },
       {
         label: "Uni-NaVid",
         values: ["25.7", "39.5", "41.9", "11.3", "27.4", "43.5", "8.26", "28.6", "43.7", "5.0"],
       },
       {
-        label: "NavFoM",
-        values: ["85.0", { value: "80.5", emphasis: "blue" }, "--", { value: "61.4", emphasis: "blue" }, { value: "68.2", emphasis: "blue" }, "--", "--", "--", "--", "2.0"],
+        label: "NavFoM¶",
+        values: ["88.4", "80.7", "--", "62.0", "67.9", "--", "--", "--", "--", "5.1"],
       },
       {
         label: "TrackVLA",
         values: [
-          { value: "85.1", emphasis: "blue" },
+          "85.1",
           "78.6",
-          { value: "1.65", emphasis: "blue" },
+          "1.65",
           "57.6",
           "63.2",
-          { value: "5.80", emphasis: "blue" },
-          { value: "50.2", emphasis: "blue" },
-          { value: "63.7", emphasis: "blue" },
-          { value: "17.1", emphasis: "blue" },
+          "5.80",
+          "50.2",
+          "63.7",
+          "17.1",
           { value: "10.0", emphasis: "blue" },
+        ],
+      },
+      {
+        label: "TrackVLA++¶",
+        values: [
+          { value: "90.9", emphasis: "blue" },
+          { value: "82.7", emphasis: "blue" },
+          { value: "1.50", emphasis: "blue" },
+          { value: "74.0", emphasis: "blue" },
+          { value: "73.7", emphasis: "blue" },
+          { value: "3.51", emphasis: "blue" },
+          { value: "55.9", emphasis: "blue" },
+          { value: "63.8", emphasis: "blue" },
+          { value: "15.1", emphasis: "blue" },
+          "4.8",
         ],
       },
     ],
     notes: [
-      "Red and blue indicate the best result in each metric within the Non-MLLM-based and MLLM-based groups, respectively.",
-      "† uses GroundingDINO. ‡ uses SoM+GPT-4o.",
-      "§ FPS is measured on an RTX 4090 unless otherwise specified; EVT is measured on an RTX 3090 and Uni-NaVid on an NVIDIA A100.",
+      "Red and blue mark the best language-prompt result within the non-MLLM and MLLM groups; bold marks the best spatial-prompt result.",
+      "Spatial prompts use visible-target initialization with the initial heading perturbed within ±20°, because an instance can only be designated once it is visible. This is a separate protocol, so those rows are not directly comparable with either language-prompt block, including USS's own.",
+      "† grounding with GroundingDINO. ‡ with SoM+GPT-4o. ¶ four-view setting.",
+      "FPS is measured on an RTX 4090 for USS; baseline throughput is taken as reported (EVT on an RTX 3090, Uni-NaVid on an A100) rather than re-benchmarked, so the gaps reflect deployment cost rather than controlled latency measurements.",
     ],
   } satisfies TableData,
   experimentNarrative: [
-    "Real-robot trials show that spatial prompts substantially improve identity preservation when multiple similar people appear, while maintaining robust performance in long routes and narrow corridors.",
-    "On EVT-Bench, USS establishes a strong accuracy-efficiency frontier: it is state-of-the-art among non-MLLM methods and remains dramatically faster than recent MLLM-based trackers.",
+    "Across 320 zero-shot real-robot trials, the four prompt types behave similarly in ordinary tracking scenarios and separate in the single scene where a distractor shares most of the target's described attributes: the box prompt succeeds in 18 of 20 trials there against 9 of 20 for language.",
+    "On EVT-Bench under the standard language-prompt protocol, USS obtains the highest success rate among non-MLLM methods on all three splits while running at 57 FPS, below the MLLM trackers in success rate and several times above their reported throughput.",
   ],
   demos: demoItems,
-  bibtex: `@article{xie2026ussunifiedspatialsemanticprompts,
-  title={USS: Unified Spatial-Semantic Prompts for Embodied Visual Tracking with Latent Dynamics Learning},
+  bibtex: `@article{xie2026ussunifyingspatialsemanticprompting,
+  title={USS: Unifying Spatial-Semantic Prompting for End to End Embodied Visual Tracking},
   author={Yuchen Xie and Xinyu Zhou and Kuangji Zuo and Yanshuo Lu and Fengrui Huang and Boyu Ma and Jianfei Yang},
   journal={arXiv preprint arXiv:2606.25880},
   year={2026}

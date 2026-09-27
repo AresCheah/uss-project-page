@@ -4,11 +4,11 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 const highlightedPhrases = [
   "Embodied Visual Tracking (EVT)",
   "unified spatial-semantic prompting",
-  "text, point, bounding box, and mask prompts",
-  "hybrid attention",
-  "latent world model",
-  "explicit spatial target cues yield higher success rates than text-only prompts",
-  "more precise and flexible target indication interface for embodied visual tracking",
+  "text, a point, a box, and a mask serve as complementary target specifications",
+  "hybrid-attention fusion, temporal memory, cross-view aggregation, latent prediction, and waypoint decoding",
+  "320 zero-shot real-robot trials",
+  "different scenarios favor different target specifications",
+  "highest success rate among non-MLLM methods at 57 FPS",
 ];
 
 function renderHighlightedCore(text: string) {

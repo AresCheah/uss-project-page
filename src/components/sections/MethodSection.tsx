@@ -10,7 +10,7 @@ export default function MethodSection() {
           index="03"
           eyebrow="Method"
           title="Method"
-          description="One architecture that turns heterogeneous prompts into egocentric waypoints."
+          description="One architecture, instantiated once per prompt modality, that maps any target specification to egocentric waypoints."
         />
 
         <div className="mx-auto max-w-5xl space-y-6">
@@ -22,7 +22,7 @@ export default function MethodSection() {
               loading="lazy"
             />
             <figcaption className="px-3 pb-1 pt-5 text-sm leading-7 text-slate-500">
-              The method is organized into four parts: input encoding, vision-prompt alignment, waypoint prediction head, and an action-conditioned world model used during training.
+              The common USS architecture, which maps RGB observations and a target prompt to egocentric waypoints: prompt encoding, vision-prompt fusion with temporal memory and cross-view aggregation, a waypoint prediction head, and an action-conditioned world model used only during training.
             </figcaption>
           </figure>
 

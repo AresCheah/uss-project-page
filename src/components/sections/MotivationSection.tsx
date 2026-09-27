@@ -10,7 +10,7 @@ export default function MotivationSection() {
           index="01"
           eyebrow={siteContent.motivation.eyebrow}
           title="Motivation"
-          description="From ambiguous language to precise target grounding."
+          description="Different scenarios favor different target specifications."
         />
 
         <div className="mx-auto max-w-5xl space-y-6">
@@ -22,7 +22,7 @@ export default function MotivationSection() {
               loading="lazy"
             />
             <figcaption className="px-3 pb-1 pt-5 text-sm leading-7 text-slate-500">
-              Spatial prompts inject instance-level evidence into target indication, reducing the ambiguity that text-only descriptions face in cluttered scenes.
+              (a) Different scenarios favor different specifications: a description can be ambiguous, unavailable, or too slow, while a spatial prompt requires the target to be already visible. (b) Prior EVT policies take no prompt or a language prompt; USS encodes a spatial prompt and conditions the policy on it directly.
             </figcaption>
           </figure>
 

@@ -10,7 +10,7 @@ export default function ContributionsSection() {
           index="02"
           eyebrow="Key contributions"
           title="Contributions"
-          description="A sharper interface for embodied visual tracking."
+          description="Complementary target-specification interfaces, and one architecture that serves all of them."
         />
 
         <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-3">
