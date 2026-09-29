@@ -2,9 +2,10 @@ import { cn } from "@/lib/utils";
 import type { ModalityId } from "@/content/siteContent";
 
 /**
- * One scene per stage of the paper's method figure (a-d). Only the stage being
- * explained is drawn, so each one can be large and legible instead of the whole
- * pipeline competing for the same space.
+ * The whole method figure on one canvas, in the paper's four labelled parts.
+ * The walkthrough moves a spotlight from part to part: the active part is drawn
+ * in full colour and animated, the rest stay visible but recede, so the reader
+ * never loses the shape of the pipeline.
  *
  * Token colours follow the paper's legend: orange prompt tokens, light-blue
  * learnable queries, dark visual tokens, amber action-conditioned state.
@@ -18,26 +19,34 @@ const TOK = {
 };
 
 const LINE = "#2f6b85";
-const IDLE = "#c9d3d8";
+const IDLE = "#b9c4ca";
 
-type SceneProps = { modality: ModalityId; playing: boolean };
+const ENCODER_LABEL: Record<ModalityId, string> = {
+  text: "Text Encoder",
+  point: "Point Encoder",
+  box: "Box Encoder",
+  mask: "Mask Encoder",
+};
 
-const MODALITIES: { id: ModalityId; label: string; encoder: string; tokens: number }[] = [
-  { id: "text", label: "Text", encoder: "Text Encoder", tokens: 5 },
-  { id: "box", label: "Bounding Box", encoder: "Box Encoder", tokens: 9 },
-  { id: "point", label: "Point", encoder: "Point Encoder", tokens: 4 },
-  { id: "mask", label: "Mask", encoder: "Mask Encoder", tokens: 6 },
-];
+const MODALITY_LABEL: Record<ModalityId, string> = {
+  text: "Text",
+  point: "Point",
+  box: "Bounding Box",
+  mask: "Mask",
+};
+
+const PROMPT_TOKENS: Record<ModalityId, number> = { text: 5, point: 4, box: 9, mask: 6 };
+
+type Common = { active: boolean; playing: boolean };
 
 function Chips({
   x,
   y,
   count,
   fill,
-  size = 17,
-  gap = 6,
-  flow = false,
-  delay = 0,
+  size = 16,
+  gap = 5,
+  animate = false,
 }: {
   x: number;
   y: number;
@@ -45,8 +54,7 @@ function Chips({
   fill: string;
   size?: number;
   gap?: number;
-  flow?: boolean;
-  delay?: number;
+  animate?: boolean;
 }) {
   return (
     <g>
@@ -59,13 +67,15 @@ function Chips({
           height={size}
           rx={4}
           fill={fill}
-          className={flow ? "ms-chip" : undefined}
-          style={{ animationDelay: `${delay + i * 0.09}s` }}
+          className={animate ? "ms-chip" : undefined}
+          style={{ animationDelay: `${i * 0.09}s` }}
         />
       ))}
     </g>
   );
 }
+
+const chipsWidth = (count: number, size = 16, gap = 5) => count * size + (count - 1) * gap;
 
 function Box({
   x,
@@ -76,7 +86,7 @@ function Box({
   sub,
   dashed,
   tone = LINE,
-  fill = "#ffffff",
+  labelTop = false,
 }: {
   x: number;
   y: number;
@@ -86,7 +96,7 @@ function Box({
   sub?: string;
   dashed?: boolean;
   tone?: string;
-  fill?: string;
+  labelTop?: boolean;
 }) {
   return (
     <g>
@@ -95,19 +105,24 @@ function Box({
         y={y}
         width={w}
         height={h}
-        rx={10}
-        fill={fill}
+        rx={9}
+        fill="#ffffff"
         stroke={tone}
-        strokeWidth={1.6}
+        strokeWidth={1.5}
         strokeDasharray={dashed ? "6 5" : undefined}
       />
       {label ? (
-        <text x={x + w / 2} y={y + (sub ? h / 2 - 3 : h / 2 + 5)} textAnchor="middle" className="ms-label">
+        <text
+          x={x + w / 2}
+          y={labelTop ? y + 22 : y + (sub ? h / 2 - 2 : h / 2 + 4)}
+          textAnchor="middle"
+          className="ms-label"
+        >
           {label}
         </text>
       ) : null}
       {sub ? (
-        <text x={x + w / 2} y={y + h / 2 + 15} textAnchor="middle" className="ms-sub">
+        <text x={x + w / 2} y={y + h / 2 + 13} textAnchor="middle" className="ms-sub">
           {sub}
         </text>
       ) : null}
@@ -115,16 +130,15 @@ function Box({
   );
 }
 
-/** The trapezoid the paper uses for every encoder. */
 function Encoder({ x, y, w, h, label }: { x: number; y: number; w: number; h: number; label: string }) {
-  const inset = h * 0.22;
+  const inset = h * 0.2;
   return (
     <g>
       <path
         d={`M${x},${y} L${x + w},${y + inset} L${x + w},${y + h - inset} L${x},${y + h} Z`}
         fill="#ffffff"
         stroke={LINE}
-        strokeWidth={1.6}
+        strokeWidth={1.5}
       />
       <text x={x + w / 2} y={y + h / 2 + 4} textAnchor="middle" className="ms-sub">
         {label}
@@ -136,7 +150,7 @@ function Encoder({ x, y, w, h, label }: { x: number; y: number; w: number; h: nu
 function Arrow({ d, tone = LINE, flow = false }: { d: string; tone?: string; flow?: boolean }) {
   return (
     <g>
-      <path d={d} fill="none" stroke={tone} strokeWidth={1.6} markerEnd="url(#ms-arrow)" />
+      <path d={d} fill="none" stroke={tone} strokeWidth={1.5} markerEnd="url(#ms-arrow)" />
       {flow ? (
         <path
           d={d}
@@ -152,280 +166,256 @@ function Arrow({ d, tone = LINE, flow = false }: { d: string; tone?: string; flo
   );
 }
 
-function Caption({ x, y, text }: { x: number; y: number; text: string }) {
+function Cap({
+  x,
+  y,
+  text,
+  anchor = "middle",
+}: {
+  x: number;
+  y: number;
+  text: string;
+  anchor?: "start" | "middle" | "end";
+}) {
   return (
-    <text x={x} y={y} textAnchor="middle" className="ms-cap">
+    <text x={x} y={y} textAnchor={anchor} className="ms-cap">
       {text}
     </text>
   );
 }
 
-/* ------------------------------ a. Input Encoding ----------------------- */
-function SceneInput({ modality, playing }: SceneProps) {
-  const active = MODALITIES.find((m) => m.id === modality) ?? MODALITIES[1];
-  const others = MODALITIES.filter((m) => m.id !== modality);
+function PartTitle({ x, y, text }: { x: number; y: number; text: string }) {
+  return (
+    <text x={x} y={y} className="ms-part">
+      {text}
+    </text>
+  );
+}
+
+/* --------------------------------- a ----------------------------------- */
+function PartInput({ active, playing, modality }: Common & { modality: ModalityId }) {
+  const flow = active && playing;
+  const tokens = PROMPT_TOKENS[modality];
 
   return (
     <g>
-      <Caption x={150} y={34} text="the designation, given once at t = 1" />
+      <PartTitle x={30} y={36} text="a. Input Encoding" />
 
-      {/* The chosen prompt, shown with the real annotated first frame. */}
-      <rect x={40} y={48} width={224} height={132} rx={12} fill="#fff8f0" stroke={TOK.prompt} strokeWidth={1.8} />
-      <text x={56} y={70} className="ms-tag" fill="#b4762c">
-        {active.label.toUpperCase()}
+      <rect x={30} y={54} width={266} height={24} rx={7} fill="#fdf4e9" stroke={TOK.prompt} strokeWidth={1.3} />
+      <text x={163} y={71} textAnchor="middle" className="ms-tag" fill="#b4762c">
+        {MODALITY_LABEL[modality].toUpperCase()}
       </text>
-      <clipPath id="ms-thumb">
-        <rect x={56} y={80} width={192} height={88} rx={8} />
+
+      <clipPath id="ms-thumb-a">
+        <rect x={30} y={86} width={266} height={118} rx={9} />
       </clipPath>
       <image
         href={`${import.meta.env.BASE_URL}assets/prompts/${modality}.jpg`}
-        x={56}
-        y={80}
-        width={192}
-        height={88}
+        x={30}
+        y={86}
+        width={266}
+        height={118}
         preserveAspectRatio="xMidYMid slice"
-        clipPath="url(#ms-thumb)"
+        clipPath="url(#ms-thumb-a)"
       />
+      <rect x={30} y={86} width={266} height={118} rx={9} fill="none" stroke={TOK.prompt} strokeWidth={1.4} />
 
-      {/* The interfaces not chosen stay visible but quiet. */}
-      {others.map((m, i) => (
-        <g key={m.id} opacity={0.45}>
-          <rect x={40} y={196 + i * 34} width={224} height={26} rx={8} fill="#ffffff" stroke={IDLE} strokeWidth={1.3} />
-          <text x={56} y={213 + i * 34} className="ms-sub" fill="#8c9aa2">
-            {m.label}
-          </text>
-        </g>
-      ))}
+      <Arrow d="M163,204 V232" tone={TOK.prompt} flow={flow} />
+      <Encoder x={98} y={234} w={130} h={44} label={ENCODER_LABEL[modality]} />
+      <Arrow d="M163,278 V308" tone={TOK.prompt} flow={flow} />
 
-      <Arrow d="M264,114 H316" tone={TOK.prompt} flow={playing} />
-      <Encoder x={318} y={80} w={116} h={68} label={active.encoder} />
-      <Arrow d="M434,114 H486" tone={TOK.prompt} flow={playing} />
+      <Cap x={163} y={324} text="Prompt Tokens" />
+      <Chips x={163 - chipsWidth(tokens) / 2} y={330} count={tokens} fill={TOK.prompt} animate={flow} />
 
-      <Chips x={492} y={104} count={active.tokens} fill={TOK.prompt} flow={playing} />
-      <Caption x={492 + (active.tokens * 23) / 2} y={90} text="Prompt Tokens" />
+      <line x1={30} y1={378} x2={296} y2={378} stroke="#e6e5e0" strokeWidth={1} />
 
-      {/* The stream that keeps arriving. */}
-      <clipPath id="ms-obs">
-        <rect x={40} y={262} width={132} height={62} rx={8} />
+      <clipPath id="ms-thumb-obs">
+        <rect x={30} y={394} width={132} height={84} rx={9} />
       </clipPath>
       <image
         href={`${import.meta.env.BASE_URL}assets/prompts/text.jpg`}
-        x={40}
-        y={262}
+        x={30}
+        y={394}
         width={132}
-        height={62}
+        height={84}
         preserveAspectRatio="xMidYMid slice"
-        clipPath="url(#ms-obs)"
+        clipPath="url(#ms-thumb-obs)"
       />
-      <rect x={40} y={262} width={132} height={62} rx={8} fill="none" stroke={LINE} strokeWidth={1.4} />
-      <Caption x={106} y={340} text="Visual Observation, 3 views" />
+      <rect x={30} y={394} width={132} height={84} rx={9} fill="none" stroke={LINE} strokeWidth={1.3} />
+      <Cap x={96} y={494} text="Observation, 3 views" />
 
-      <Arrow d="M172,293 H208" tone={LINE} flow={playing} />
-      <Encoder x={210} y={262} w={104} h={62} label="Vision Encoder" />
-      <Arrow d="M314,293 H350" tone={LINE} flow={playing} />
-      <Box x={352} y={262} w={126} h={62} label="Memory" sub="16 frames" />
-      <Arrow d="M478,293 H510" tone={LINE} flow={playing} />
-      <Chips x={516} y={284} count={7} fill={TOK.visual} flow={playing} delay={0.3} />
-      <Caption x={596} y={340} text="Visual Tokens" />
+      <Arrow d="M162,436 H186" flow={flow} />
+      <Encoder x={188} y={414} w={108} h={44} label="Vision Encoder" />
+      <Arrow d="M242,458 V508" flow={flow} />
+      <Box x={30} y={510} w={266} h={40} label="Memory" sub="16 frames" />
+      <Arrow d="M163,550 V580" flow={flow} />
+
+      <Cap x={163} y={596} text="Visual Tokens" />
+      <Chips x={163 - chipsWidth(7) / 2} y={602} count={7} fill={TOK.visual} animate={flow} />
     </g>
   );
 }
 
-/* ------------------------ b. Vision-Prompt Alignment -------------------- */
-function SceneAlign({ playing }: SceneProps) {
+/* --------------------------------- b ----------------------------------- */
+function PartAlign({ active, playing }: Common) {
+  const flow = active && playing;
+
   return (
     <g>
-      <Chips x={92} y={54} count={5} fill={TOK.prompt} flow={playing} />
-      <Caption x={149} y={44} text="Prompt Tokens" />
-      <Chips x={360} y={54} count={5} fill={TOK.query} flow={playing} delay={0.2} />
-      <Caption x={417} y={44} text="Learnable Queries" />
+      <PartTitle x={350} y={36} text="b. Vision-Prompt Alignment" />
 
-      <Arrow d="M149,78 V104" flow={playing} />
-      <Arrow d="M417,78 V104" flow={playing} />
+      <Cap x={412} y={72} text="Prompt Tokens" />
+      <Chips x={362} y={80} count={5} fill={TOK.prompt} animate={flow} />
+      <Cap x={566} y={72} text="Learnable Queries" />
+      <Chips x={524} y={80} count={4} fill={TOK.query} animate={flow} />
 
-      <Box x={64} y={106} w={440} h={66} dashed />
-      <text x={284} y={128} textAnchor="middle" className="ms-label">
-        1) Self-Attention on Prompt + Query Tokens
-      </text>
-      <path
-        d="M120,158 q40,-22 80,0 M200,158 q40,-22 80,0 M280,158 q40,-22 80,0 M360,158 q40,-22 80,0"
-        fill="none"
-        stroke={LINE}
-        strokeWidth={1.2}
-        strokeDasharray="3 3"
-        className={playing ? "ms-flow" : undefined}
-      />
+      <Arrow d="M412,104 V134" tone={TOK.prompt} flow={flow} />
+      <Arrow d="M566,104 V134" tone={TOK.query} flow={flow} />
 
-      <Arrow d="M284,172 V198" flow={playing} />
+      <Box x={350} y={136} w={266} h={44} label="Self-Attention" />
+      <Arrow d="M483,180 V212" flow={flow} />
 
-      {/* Hybrid attention: visual tokens above, prompt/query below, read-write-read. */}
-      <Box x={64} y={200} w={440} h={116} dashed tone={TOK.prompt} />
-      <text x={284} y={222} textAnchor="middle" className="ms-label">
-        2) Hybrid Attention Fusion
-      </text>
-      <Chips x={104} y={236} count={9} fill={TOK.visual} flow={playing} />
-      <Chips x={104} y={286} count={5} fill={TOK.prompt} flow={playing} delay={0.15} />
-      <Chips x={244} y={286} count={4} fill={TOK.query} flow={playing} delay={0.25} />
-      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-        <g key={i} className={playing ? "ms-rw" : undefined} style={{ animationDelay: `${i * 0.08}s` }}>
+      <Box x={350} y={214} w={266} h={158} label="Hybrid Attention Fusion" tone={TOK.prompt} dashed labelTop />
+      <Chips x={396} y={266} count={8} fill={TOK.visual} size={14} gap={4} animate={flow} />
+      <Chips x={396} y={336} count={5} fill={TOK.prompt} size={14} gap={4} animate={flow} />
+      <Chips x={492} y={336} count={3} fill={TOK.query} size={14} gap={4} animate={flow} />
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <g key={i} className={flow ? "ms-rw" : undefined} style={{ animationDelay: `${i * 0.09}s` }}>
+          <path d={`M${400 + i * 18},284 V330`} stroke={LINE} strokeWidth={1} markerEnd="url(#ms-arrow-sm)" />
           <path
-            d={`M${112 + i * 23},${258} V${282}`}
-            stroke={LINE}
-            strokeWidth={1.1}
-            markerEnd="url(#ms-arrow-sm)"
-          />
-          <path
-            d={`M${118 + i * 23},${282} V${258}`}
+            d={`M${406 + i * 18},330 V284`}
             stroke={TOK.prompt}
-            strokeWidth={1.1}
+            strokeWidth={1}
             markerEnd="url(#ms-arrow-sm-warm)"
           />
         </g>
       ))}
 
-      <Chips x={560} y={236} count={6} fill={TOK.query} flow={playing} delay={0.4} />
-      <Caption x={628} y={226} text="3) Sparse prompt-conditioned representations" />
-      <Arrow d="M504,258 H554" tone={TOK.query} flow={playing} />
+      <Arrow d="M483,372 V404" tone={TOK.query} flow={flow} />
+      <Cap x={483} y={420} text="Sparse Representations" />
+      <Chips x={483 - chipsWidth(6) / 2} y={426} count={6} fill={TOK.query} animate={flow} />
     </g>
   );
 }
 
-/* --------------------- c. Waypoint Prediction Head ---------------------- */
-function SceneHead({ playing }: SceneProps) {
+/* --------------------------------- c ----------------------------------- */
+function PartHead({ active, playing }: Common) {
+  const flow = active && playing;
+
   return (
     <g>
-      <Box x={60} y={56} w={230} h={64} dashed tone={TOK.query} />
-      <Chips x={78} y={80} count={8} fill={TOK.query} flow={playing} />
-      <Caption x={175} y={46} text="Sparse Representations" />
+      <PartTitle x={672} y={36} text="c. Waypoint Prediction Head" />
 
-      <Box x={318} y={56} w={128} h={64} />
-      <rect x={366} y={76} width={26} height={26} rx={5} fill="#b7dcc4" />
-      <Caption x={382} y={46} text="Visibility Query" />
+      <Cap x={772} y={72} text="Sparse representations" />
+      <Cap x={996} y={72} text="Visibility query" />
+      <rect x={988} y={78} width={16} height={16} rx={4} fill="#a9d4b8" />
 
-      <Arrow d="M175,120 V152" tone={TOK.query} flow={playing} />
-      <Arrow d="M382,120 V152" flow={playing} />
+      <Arrow d="M772,80 V106" tone={TOK.query} flow={flow} />
+      <Arrow d="M996,98 V106" flow={flow} />
 
-      <Box x={60} y={154} w={386} h={44} label="Transformer Decoder" />
+      <Box x={672} y={108} w={436} h={40} label="Transformer Decoder" />
+      <Arrow d="M772,148 V176" flow={flow} />
+      <Arrow d="M996,148 V176" flow={flow} />
 
-      <Arrow d="M175,198 V228" flow={playing} />
-      <Arrow d="M382,198 V228" flow={playing} />
+      <Box x={672} y={178} w={200} h={40} label="Waypoint Decoder" />
+      <Box x={896} y={178} w={212} h={40} label="MLP" />
+      <Arrow d="M772,218 V246" flow={flow} />
+      <Arrow d="M996,218 V246" flow={flow} />
 
-      <Box x={60} y={230} w={230} h={42} label="Waypoint Decoder" />
-      <Box x={318} y={230} w={128} h={42} label="MLP" />
+      <Box x={672} y={248} w={200} h={104} />
+      <Box x={896} y={248} w={212} h={104} />
 
-      <Arrow d="M175,272 V296" flow={playing} />
-      <Arrow d="M382,272 V296" flow={playing} />
-
-      {/* Trajectory */}
-      <Box x={492} y={56} w={330} h={150} />
-      <Caption x={657} y={226} text="Predicted trajectory" />
       <path
-        d="M520,170 C560,120 600,150 640,120 C680,92 720,110 760,88 L796,80"
+        d="M700,330 C728,306 756,316 786,300 C816,284 836,292 856,284"
         fill="none"
         stroke={LINE}
-        strokeWidth={2}
-        className={playing ? "ms-flow-solid" : undefined}
+        strokeWidth={1.8}
+        className={flow ? "ms-flow-solid" : undefined}
       />
       {[
-        [520, 170],
-        [578, 138],
-        [640, 120],
-        [700, 100],
-        [760, 88],
+        [700, 330],
+        [742, 313],
+        [786, 300],
+        [826, 289],
+        [856, 284],
       ].map(([cx, cy], i) => (
         <circle
           key={i}
           cx={cx}
           cy={cy}
-          r={5}
+          r={4}
           fill={LINE}
-          className={playing ? "ms-pulse" : undefined}
+          className={flow ? "ms-pulse" : undefined}
           style={{ animationDelay: `${i * 0.12}s` }}
         />
       ))}
-      <circle cx={520} cy={170} r={9} fill="none" stroke={TOK.prompt} strokeWidth={2.4} />
-      <text x={520} y={192} textAnchor="middle" className="ms-sub">
-        robot
-      </text>
-      <text x={796} y={70} textAnchor="middle" className="ms-sub">
-        target
-      </text>
+      <circle cx={700} cy={330} r={7.5} fill="none" stroke={TOK.prompt} strokeWidth={2} />
+      <Cap x={772} y={272} text="Trajectory" />
 
-      {/* Visibility */}
-      <Box x={492} y={230} w={330} h={70} />
-      <Caption x={657} y={320} text="Per-view visibility" />
       {[0, 1, 2].map((i) => (
         <g key={i}>
-          <rect x={540 + i * 100} y={246} width={54} height={38} rx={5} fill="#eef4f6" />
+          <rect x={926 + i * 62} y={272} width={38} height={58} rx={5} fill="#eef4f6" />
           <rect
-            x={540 + i * 100}
-            y={246 + (i === 1 ? 20 : 6)}
-            width={54}
-            height={i === 1 ? 18 : 32}
+            x={926 + i * 62}
+            y={i === 1 ? 306 : 282}
+            width={38}
+            height={i === 1 ? 24 : 48}
             rx={5}
             fill="#8cc6a8"
-            className={playing ? "ms-bar" : undefined}
+            className={flow ? "ms-bar" : undefined}
             style={{ animationDelay: `${i * 0.14}s` }}
           />
-          <text x={567 + i * 100} y={296} textAnchor="middle" className="ms-sub">
+          <text x={945 + i * 62} y={344} textAnchor="middle" className="ms-sub">
             {["L", "F", "R"][i]}
           </text>
         </g>
       ))}
+      <Cap x={1002} y={272} text="Per-view visibility" />
     </g>
   );
 }
 
-/* ------------------ d. Action-Conditioned World Model ------------------- */
-function SceneWorld({ playing }: SceneProps) {
+/* --------------------------------- d ----------------------------------- */
+function PartWorld({ active, playing }: Common) {
+  const flow = active && playing;
+
   return (
     <g>
-      <Chips x={64} y={72} count={5} fill={TOK.query} flow={playing} />
-      <Caption x={120} y={62} text="Current state" />
+      <PartTitle x={672} y={412} text="d. Action-Conditioned World Model" />
 
-      <Box x={64} y={140} w={176} h={56} label="Predicted waypoints" />
+      <Cap x={714} y={446} text="Current state" anchor="middle" />
+      <Chips x={714 - chipsWidth(4, 14, 4) / 2} y={452} count={4} fill={TOK.query} size={14} gap={4} animate={flow} />
+      <Box x={672} y={492} w={116} h={36} label="Waypoints" />
 
-      <Arrow d="M180,90 H268 V128" tone={TOK.query} flow={playing} />
-      <Arrow d="M240,168 H268 V150" flow={playing} />
+      <Arrow d="M754,468 H798 V488 H816" tone={TOK.query} flow={flow} />
+      <Arrow d="M788,510 H798 V500 H816" flow={flow} />
 
-      <Box x={270} y={94} w={118} h={78} label="Action Fusion" sub="MLP" />
-      <Arrow d="M388,133 H432" tone={TOK.action} flow={playing} />
+      <Box x={820} y={462} w={112} h={64} label="Action Fusion" sub="MLP" />
+      <Arrow d="M932,494 H958" tone={TOK.action} flow={flow} />
 
-      <Chips x={438} y={122} count={5} fill={TOK.action} flow={playing} delay={0.2} />
-      <Caption x={494} y={112} text="Action-conditioned state" />
+      <Chips x={964} y={486} count={4} fill={TOK.action} size={14} gap={4} animate={flow} />
+      <Cap x={999} y={478} text="Action-conditioned state" />
 
-      <Arrow d="M494,150 V182" tone={TOK.action} flow={playing} />
-      <Box x={404} y={184} w={180} h={44} label="Latent World Model" />
-      <Arrow d="M494,228 V258" tone={TOK.action} flow={playing} />
-      <Chips x={438} y={262} count={5} fill={TOK.action} flow={playing} delay={0.35} />
-      <Caption x={494} y={302} text="Predicted next state" />
+      <Arrow d="M999,502 V528" tone={TOK.action} flow={flow} />
+      <Box x={912} y={530} w={176} h={36} label="Latent World Model" />
+      <Arrow d="M999,566 V590" tone={TOK.action} flow={flow} />
+      <Chips x={964} y={594} count={4} fill={TOK.action} size={14} gap={4} animate={flow} />
+      <Cap x={999} y={626} text="Predicted next state" />
 
-      {/* The target branch, which never ships. */}
-      <Box x={620} y={60} w={244} h={120} dashed tone={IDLE} />
-      <text x={742} y={84} textAnchor="middle" className="ms-label">
-        Future State Encoding
+      <Box x={672} y={556} w={210} h={72} dashed tone={IDLE} />
+      <text x={777} y={578} textAnchor="middle" className="ms-sub">
+        EMA encoder, stop-grad
       </text>
-      <Box x={640} y={96} w={96} h={40} label="EMA" sub="encoder" />
-      <Arrow d="M736,116 H764" tone={IDLE} />
-      <Chips x={770} y={108} count={4} fill={TOK.visual} size={15} gap={5} flow={playing} delay={0.3} />
-      <text x={742} y={166} textAnchor="middle" className="ms-sub">
-        target next state, stop-grad
-      </text>
+      <Chips x={777 - chipsWidth(4, 14, 4) / 2} y={592} count={4} fill={TOK.visual} size={14} gap={4} animate={flow} />
 
-      <Arrow d="M742,180 V232" tone={IDLE} />
-      <Arrow d="M584,284 H700 V252" tone={TOK.action} flow={playing} />
-      <Box x={640} y={234} w={204} h={50} label="Latent Alignment Loss" />
-      <Caption x={742} y={306} text="training only - removed at inference" />
+      <Arrow d="M777,628 V650" tone={IDLE} />
+      <Arrow d="M999,634 V650" tone={TOK.action} flow={flow} />
+      <Box x={672} y={652} w={436} h={34} label="Latent Alignment Loss" />
     </g>
   );
 }
 
-const SCENES: Record<string, (props: SceneProps) => JSX.Element> = {
-  input: SceneInput,
-  align: SceneAlign,
-  head: SceneHead,
-  world: SceneWorld,
-};
+type PartId = "input" | "align" | "head" | "world";
 
 export default function MethodScenes({
   stage,
@@ -438,14 +428,14 @@ export default function MethodScenes({
   playing?: boolean;
   className?: string;
 }) {
-  const Scene = SCENES[stage] ?? SceneInput;
+  const on = (id: PartId) => stage === id;
 
   return (
     <svg
-      viewBox="0 0 900 360"
+      viewBox="0 0 1120 700"
       className={cn("h-auto w-full select-none", className)}
       role="img"
-      aria-label={`USS method figure, stage ${stage}, with a ${modality} prompt`}
+      aria-label={`USS method figure, highlighting part ${stage}, with a ${modality} prompt`}
     >
       <defs>
         <marker id="ms-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
@@ -459,9 +449,47 @@ export default function MethodScenes({
         </marker>
       </defs>
 
-      <rect x={0} y={0} width={900} height={360} rx={16} fill="#fbfbf9" />
-      <g key={stage} className="ms-scene">
-        <Scene modality={modality} playing={playing} />
+      <rect x={0} y={0} width={1120} height={700} rx={16} fill="#fbfbf9" />
+
+      {/* Spotlight behind whichever part is being explained. */}
+      {[
+        { id: "input", x: 14, y: 16, w: 300, h: 660 },
+        { id: "align", x: 334, y: 16, w: 300, h: 450 },
+        { id: "head", x: 654, y: 16, w: 470, h: 356 },
+        { id: "world", x: 654, y: 392, w: 470, h: 306 },
+      ].map((slot) => (
+        <rect
+          key={slot.id}
+          x={slot.x}
+          y={slot.y}
+          width={slot.w}
+          height={slot.h}
+          rx={16}
+          fill="#ffffff"
+          stroke="var(--cyan)"
+          strokeWidth={1.4}
+          className="ms-slot"
+          opacity={stage === slot.id ? 1 : 0}
+        />
+      ))}
+
+      {/* Connections between the four parts. */}
+      <Arrow d="M262,338 H356 V76" tone={TOK.prompt} flow={playing && (on("input") || on("align"))} />
+      <Arrow d="M232,610 H336 V262 H392" tone={TOK.visual} flow={playing && (on("input") || on("align"))} />
+      <Arrow d="M540,434 H636 V80 H768" tone={TOK.query} flow={playing && (on("align") || on("head"))} />
+      <Arrow d="M772,352 V470 H730 V488" tone={LINE} flow={playing && (on("head") || on("world"))} />
+
+      <g className={cn("ms-part-g", on("input") ? "is-on" : "is-off")}>
+        <PartInput active={on("input")} playing={playing} modality={modality} />
+      </g>
+      <g className={cn("ms-part-g", on("align") ? "is-on" : "is-off")}>
+        <PartAlign active={on("align")} playing={playing} />
+      </g>
+      <g className={cn("ms-part-g", on("head") ? "is-on" : "is-off")}>
+        <PartHead active={on("head")} playing={playing} />
+      </g>
+      <g className={cn("ms-part-g", on("world") ? "is-on" : "is-off")}>
+        <PartWorld active={on("world")} playing={playing} />
       </g>
     </svg>
   );

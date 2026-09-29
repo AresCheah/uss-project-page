@@ -240,7 +240,31 @@ a {
   letter-spacing: 0.1em;
 }
 
-/* Each scene fades and lifts in when the stage changes. */
+/* The part under the spotlight; the others recede but stay readable. */
+.ms-part-g {
+  transition: opacity 0.5s ease;
+}
+
+.ms-part-g.is-on {
+  opacity: 1;
+}
+
+.ms-part-g.is-off {
+  opacity: 0.26;
+}
+
+.ms-slot {
+  transition: opacity 0.5s ease;
+}
+
+.ms-part {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+  fill: #1d2a31;
+}
+
+/* Text blocks that swap with the stage. */
 .ms-scene {
   animation: ms-scene-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -272,6 +296,20 @@ a {
 .ms-bar {
   transform-origin: bottom;
   animation: ms-bar 2.4s ease-in-out infinite;
+}
+
+/* Fills over one stage's dwell time, so the rail doubles as a timer. */
+.ms-progress {
+  animation: ms-progress 6s linear forwards;
+}
+
+@keyframes ms-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes ms-scene-in {
@@ -333,6 +371,9 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .ms-scene,
+  .ms-part-g,
+  .ms-slot,
+  .ms-progress,
   .ms-chip,
   .ms-flow,
   .ms-flow-solid,
