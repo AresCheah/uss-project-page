@@ -1,6 +1,7 @@
 import { siteContent } from "@/content/siteContent";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import SectionIntro from "@/components/ui/SectionIntro";
+import ArchitectureWalkthrough from "@/components/sections/ArchitectureWalkthrough";
 
 export default function MethodSection() {
   return (
@@ -12,6 +13,8 @@ export default function MethodSection() {
           title="Method"
           description="One architecture, instantiated once per prompt modality, that maps any target specification to egocentric waypoints."
         />
+
+        <ArchitectureWalkthrough />
 
         <div className="mx-auto max-w-5xl space-y-6">
           <figure className="panel-muted overflow-hidden p-5">

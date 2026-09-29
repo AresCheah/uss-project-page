@@ -34,6 +34,39 @@ export type TableData = {
   notes?: string[];
 };
 
+export type HighlightStat = {
+  value: number;
+  decimals: number;
+  suffix: string;
+  label: string;
+};
+
+export type ModalityId = "text" | "point" | "box" | "mask";
+
+export type PromptModality = {
+  id: ModalityId;
+  label: string;
+  /** One-line description of how this designation is given. */
+  given: string;
+  /** How the encoded prompt reaches the policy. */
+  route: string;
+  strength: string;
+};
+
+export type ArchitectureStep = {
+  id: string;
+  kicker: string;
+  title: string;
+  body: string;
+};
+
+export type SpeedEntry = {
+  label: string;
+  fps: number;
+  note: string;
+  family: "uss" | "modular" | "mllm";
+};
+
 export type DemoItem = {
   title: string;
   tag: string;
@@ -196,11 +229,11 @@ export const siteContent = {
     ],
   },
   highlightStats: [
-    { value: "86.7%", label: "STT success with box prompts" },
-    { value: "83.6%", label: "DT success with box prompts" },
-    { value: "57 FPS", label: "Language policy on an RTX 4090" },
-    { value: "18/20", label: "Similar-people trials with box prompts, vs 9/20 for language" },
-  ],
+    { value: 86.7, decimals: 1, suffix: "%", label: "STT success rate with box prompts" },
+    { value: 83.6, decimals: 1, suffix: "%", label: "DT success rate with box prompts" },
+    { value: 57, decimals: 0, suffix: " FPS", label: "Language policy on an RTX 4090" },
+    { value: 320, decimals: 0, suffix: "", label: "Zero-shot real-robot trials, simulation-only policies" },
+  ] satisfies HighlightStat[],
   realWorldTable: {
     caption:
       "Real-world success rate across four indoor tracking scenes. 20 trials per scene and prompt type, 320 in total, all zero-shot with simulation-trained single-view policies.",
@@ -347,6 +380,76 @@ export const siteContent = {
       "FPS is measured on an RTX 4090 for USS; baseline throughput is taken as reported (EVT on an RTX 3090, Uni-NaVid on an A100) rather than re-benchmarked, so the gaps reflect deployment cost rather than controlled latency measurements.",
     ],
   } satisfies TableData,
+  promptModalities: [
+    {
+      id: "text",
+      label: "Text",
+      given: "A natural-language description of the target.",
+      route: "Encoded by a frozen PE-Core text encoder into prompt tokens.",
+      strength: "The only interface that can name a target the robot cannot currently see.",
+    },
+    {
+      id: "point",
+      label: "Point",
+      given: "A single click on the target in the first frame.",
+      route: "RoIAlign over a fixed-size pseudo box, pooled into 4 prompt tokens.",
+      strength: "The fastest designation to give, and enough to fix one instance.",
+    },
+    {
+      id: "box",
+      label: "Box",
+      given: "A bounding box drawn around the target in the first frame.",
+      route: "RoIAlign over the box region, pooled into 9 prompt tokens.",
+      strength: "Strongest on both EVT-Bench splits and in the similar-people scene.",
+    },
+    {
+      id: "mask",
+      label: "Mask",
+      given: "A segmentation mask of the target in the first frame.",
+      route: "Added to the first-frame visual tokens and held in memory as a dense anchor.",
+      strength: "The densest designation, though it never passes through prompt-token fusion.",
+    },
+  ] satisfies PromptModality[],
+  architectureSteps: [
+    {
+      id: "prompt",
+      kicker: "Step 01",
+      title: "One designation, given once",
+      body: "At t = 1 the person supplies a single prompt. A modality-specific encoder turns it into a target specification that is computed once and then held fixed - it says which instance the episode is about, not where that instance is at later steps.",
+    },
+    {
+      id: "vision",
+      kicker: "Step 02",
+      title: "Egocentric stream and temporal memory",
+      body: "Every step, each camera view is encoded independently. A sliding 16-frame memory bank keeps recent visual tokens so the target survives ego-motion and brief occlusions. Removing this memory costs 11.4 SR points, the largest single effect we measured.",
+    },
+    {
+      id: "fusion",
+      kicker: "Step 03",
+      title: "Read, write, read",
+      body: "Prompt tokens and learnable queries first read evidence from the visual tokens, then write target-conditioned information back to the visual stream, and finally read the updated representation again. What leaves the block is a small set of sparse, prompt-conditioned queries.",
+    },
+    {
+      id: "waypoints",
+      kicker: "Step 04",
+      title: "Across views, into waypoints",
+      body: "A PETR-style 3D positional encoding places every camera in one robot-frame reference space before a shared decoder emits future egocentric waypoints and a per-view presence logit. Only the first waypoint is executed each control step.",
+    },
+    {
+      id: "world",
+      kicker: "Step 05",
+      title: "A world model that never ships",
+      body: "During training the policy predicts its own next latent state, conditioned on the waypoints it just produced, and aligns that prediction with a detached EMA target instead of reconstructing pixels. The predictor is discarded at inference, so it costs nothing at deployment.",
+    },
+  ] satisfies ArchitectureStep[],
+  speedComparison: [
+    { label: "USS (language)", fps: 57.0, note: "RTX 4090, measured", family: "uss" },
+    { label: "EVT", fps: 15.0, note: "RTX 3090, reported", family: "modular" },
+    { label: "TrackVLA", fps: 10.0, note: "RTX 4090, reported", family: "mllm" },
+    { label: "NavFoM", fps: 5.1, note: "RTX 4090, reported", family: "mllm" },
+    { label: "Uni-NaVid", fps: 5.0, note: "A100, reported", family: "mllm" },
+    { label: "TrackVLA++", fps: 4.8, note: "RTX 4090, reported", family: "mllm" },
+  ] satisfies SpeedEntry[],
   experimentNarrative: [
     "Across 320 zero-shot real-robot trials, the four prompt types behave similarly in ordinary tracking scenarios and separate in the single scene where a distractor shares most of the target's described attributes: the box prompt succeeds in 18 of 20 trials there against 9 of 20 for language.",
     "On EVT-Bench under the standard language-prompt protocol, USS obtains the highest success rate among non-MLLM methods on all three splits while running at 57 FPS, below the MLLM trackers in success rate and several times above their reported throughput.",

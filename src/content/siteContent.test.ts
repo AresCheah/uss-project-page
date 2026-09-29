@@ -33,4 +33,24 @@ describe("site content", () => {
       values: ["45%", { value: "90%", emphasis: "bold" }, "80%", "70%"],
     });
   });
+  it("keeps the walkthrough data in step with the paper", () => {
+    expect(siteContent.promptModalities.map((item) => item.id)).toEqual([
+      "text",
+      "point",
+      "box",
+      "mask",
+    ]);
+    expect(siteContent.architectureSteps.map((step) => step.id)).toEqual([
+      "prompt",
+      "vision",
+      "fusion",
+      "waypoints",
+      "world",
+    ]);
+
+    // The throughput chart must not drift from the FPS column of the table.
+    const uss = siteContent.speedComparison.find((entry) => entry.family === "uss");
+    expect(uss?.fps).toBe(57);
+    expect(Math.max(...siteContent.speedComparison.map((entry) => entry.fps))).toBe(57);
+  });
 });

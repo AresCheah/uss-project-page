@@ -3,6 +3,7 @@ import DemoGallery from "@/components/sections/DemoGallery";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import SectionIntro from "@/components/ui/SectionIntro";
 import ResultTable from "@/components/ui/ResultTable";
+import SpeedBars from "@/components/ui/SpeedBars";
 
 export default function ExperimentSection() {
   return (
@@ -44,6 +45,7 @@ export default function ExperimentSection() {
               Full simulation comparison on EVT-Bench with task-wise SR, TR, CR, and inference speed.
             </p>
             <ResultTable data={siteContent.benchmarkTable} compact />
+            <SpeedBars />
           </div>
         </div>
       </div>

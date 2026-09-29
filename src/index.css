@@ -189,3 +189,112 @@ a {
     opacity: 1;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Architecture diagram
+   ------------------------------------------------------------------------ */
+
+.uss-node rect,
+.uss-edge path {
+  transition:
+    fill 0.45s ease,
+    stroke 0.45s ease,
+    stroke-width 0.45s ease,
+    opacity 0.45s ease;
+}
+
+.uss-kicker {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.uss-title {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.uss-detail {
+  font-size: 10px;
+}
+
+.uss-edge-label {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+/* Marching dashes along an active edge. */
+.uss-flow {
+  animation: uss-dash 1.1s linear infinite;
+}
+
+/* Breathing ring around the stage the current step is talking about. */
+.uss-halo {
+  animation: uss-halo-pulse 2.4s ease-in-out infinite;
+}
+
+.uss-pulse {
+  animation: uss-dot-pulse 1.6s ease-in-out infinite;
+}
+
+/* read -> write -> read, cycling in order while the fusion step is active. */
+.uss-rwr-step {
+  opacity: 0.4;
+}
+
+.uss-rwr.is-live .uss-rwr-step {
+  animation: uss-rwr-cycle 1.35s ease-in-out infinite;
+}
+
+@keyframes uss-dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+@keyframes uss-halo-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes uss-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes uss-rwr-cycle {
+  0%,
+  22%,
+  100% {
+    opacity: 0.35;
+  }
+  8%,
+  16% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uss-flow,
+  .uss-halo,
+  .uss-pulse,
+  .uss-rwr.is-live .uss-rwr-step {
+    animation: none !important;
+  }
+
+  .uss-rwr-step {
+    opacity: 1;
+  }
+}

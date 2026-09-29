@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import { pageSections } from "@/content/siteContent";
 import { cn } from "@/lib/utils";
@@ -5,6 +6,30 @@ import { useActiveSection } from "@/hooks/useActiveSection";
 
 export default function TopNav() {
   const activeSection = useActiveSection(pageSections.map((section) => section.id));
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let frame: number | null = null;
+
+    const update = () => {
+      frame = null;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(scrollable > 0 ? Math.min(window.scrollY / scrollable, 1) : 0);
+    };
+
+    const onScroll = () => {
+      if (frame === null) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
@@ -34,6 +59,12 @@ export default function TopNav() {
             </a>
           ))}
         </nav>
+      </div>
+      <div className="h-[2px] w-full bg-transparent" aria-hidden="true">
+        <div
+          className="h-full bg-[color:var(--cyan)] transition-[width] duration-150 ease-out"
+          style={{ width: `${progress * 100}%` }}
+        />
       </div>
     </header>
   );
