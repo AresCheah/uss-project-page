@@ -5,6 +5,7 @@ import BibtexSection from "@/components/sections/BibtexSection";
 import ContributionsSection from "@/components/sections/ContributionsSection";
 import ExperimentSection from "@/components/sections/ExperimentSection";
 import HeroSection from "@/components/sections/HeroSection";
+import HeroReel from "@/components/sections/HeroReel";
 import HighlightStats from "@/components/sections/HighlightStats";
 import MethodSection from "@/components/sections/MethodSection";
 import MotivationSection from "@/components/sections/MotivationSection";
@@ -16,6 +17,7 @@ export default function Home() {
         <TopNav />
         <main>
           <HeroSection />
+          <HeroReel />
           <HighlightStats />
           <AbstractSection />
           <MotivationSection />

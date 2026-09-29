@@ -6,6 +6,12 @@ type Options = {
   /** Once true, stay true. Useful for one-shot entrance animations. */
   once?: boolean;
   rootMargin?: string;
+  /**
+   * Value to start from before the observer has reported. Autoplaying media
+   * passes true so the failure mode is "it plays" rather than "it is stuck on
+   * a blank first frame".
+   */
+  initial?: boolean;
 };
 
 /**
@@ -17,9 +23,10 @@ export function useInView<T extends HTMLElement>({
   threshold = 0.25,
   once = true,
   rootMargin = "0px",
+  initial = false,
 }: Options = {}) {
   const ref = useRef<T | null>(null);
-  const [inView, setInView] = useState(false);
+  const [inView, setInView] = useState(initial);
 
   useEffect(() => {
     const node = ref.current;
@@ -32,7 +39,10 @@ export function useInView<T extends HTMLElement>({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
+        // A batched callback can carry several records for the same node; the
+        // last one is the current state. Reading entries[0] leaves the hook
+        // stuck on a stale "not intersecting" during a fast scroll.
+        const entry = entries[entries.length - 1];
         if (!entry) return;
 
         if (entry.isIntersecting) {

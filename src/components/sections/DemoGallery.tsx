@@ -16,9 +16,9 @@ export default function DemoGallery({ embedded = false }: DemoGalleryProps) {
   ) => (
     <article key={demo.title}>
       <div className="panel group overflow-hidden">
-        <div className="bg-slate-50 p-3">
+        <div className="bg-[#fbfbf9] p-3">
           <div
-            className={`relative w-full overflow-hidden rounded-[20px] border border-slate-200 bg-black ${
+            className={`relative w-full overflow-hidden rounded-[18px] border border-[#ecebe6] bg-[#0e1113] ${
               size === "compact" ? "aspect-[16/10]" : "aspect-[16/10]"
             }`}
           >
@@ -51,9 +51,7 @@ export default function DemoGallery({ embedded = false }: DemoGalleryProps) {
           </div>
         </div>
         <div className={`space-y-3 ${size === "compact" ? "p-5" : "p-6"}`}>
-          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-slate-500">
-            {demo.tag}
-          </span>
+          <span className="capsule">{demo.tag}</span>
           <div>
             <h3
               className={`font-display leading-tight text-ivory ${

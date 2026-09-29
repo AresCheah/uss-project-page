@@ -8,19 +8,35 @@
   font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #101828;
-  background: #ffffff;
+  color: #16181d;
+  background: #f7f7f4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --graphite: #ffffff;
+  --graphite: #f7f7f4;
   --graphite-soft: #ffffff;
-  --ivory: #101828;
-  --cyan: #49627f;
+  --ivory: #16181d;
+  --cyan: #1b9e88;
   --lime: #d7ff64;
   --steel: #6b7a8c;
+
+  /* Semantic colours for the architecture diagram: each stage of the pipeline
+     keeps the same hue wherever it appears. */
+  --dg-prompt: #7c6cf0;
+  --dg-prompt-soft: #f1effe;
+  --dg-vision: #4d93f0;
+  --dg-vision-soft: #eaf2fe;
+  --dg-memory: #e0a02f;
+  --dg-memory-soft: #fdf4e3;
+  --dg-fusion: #1b9e88;
+  --dg-fusion-soft: #e4f5f1;
+  --dg-out: #0f7d6c;
+  --dg-out-soft: #e1f2ef;
+  --dg-aux: #94a3b8;
+  --dg-aux-soft: #f6f8fa;
+  --dg-canvas: #fbfbf9;
 }
 
 html {
@@ -30,7 +46,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #ffffff;
+  background: #f7f7f4;
 }
 
 a {
@@ -107,7 +123,9 @@ a {
   }
 
   .shadow-panel {
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    box-shadow:
+      0 1px 2px rgba(22, 24, 29, 0.04),
+      0 12px 32px -20px rgba(22, 24, 29, 0.18);
   }
 
   .section-shell {
@@ -115,11 +133,16 @@ a {
   }
 
   .panel {
-    @apply rounded-[18px] border border-slate-200 bg-white shadow-panel;
+    @apply rounded-[22px] border border-[#ecebe6] bg-white shadow-panel;
   }
 
   .panel-muted {
-    @apply rounded-[18px] border border-slate-200 bg-white shadow-panel;
+    @apply rounded-[22px] border border-[#ecebe6] bg-[#fbfbf9] shadow-panel;
+  }
+
+  /* Seed-style capsule label used for figure captions and tags. */
+  .capsule {
+    @apply inline-flex items-center gap-2 rounded-full border border-[rgba(27,158,136,0.28)] bg-[color:var(--dg-fusion-soft)] px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--dg-out)];
   }
 
   .reveal-section {
@@ -195,7 +218,7 @@ a {
    ------------------------------------------------------------------------ */
 
 .uss-node rect,
-.uss-edge path {
+.uss-edge-path {
   transition:
     fill 0.45s ease,
     stroke 0.45s ease,
@@ -204,33 +227,32 @@ a {
 }
 
 .uss-kicker {
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 .uss-title {
   font-family: "Source Serif 4", Georgia, serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .uss-detail {
-  font-size: 10px;
+  font-size: 10.5px;
 }
 
 .uss-edge-label {
-  font-size: 9px;
+  font-size: 9.5px;
   letter-spacing: 0.02em;
 }
 
 /* Marching dashes along an active edge. */
 .uss-flow {
-  animation: uss-dash 1.1s linear infinite;
+  animation: uss-dash 1.15s linear infinite;
 }
 
-/* Breathing ring around the stage the current step is talking about. */
 .uss-halo {
   animation: uss-halo-pulse 2.4s ease-in-out infinite;
 }
@@ -239,9 +261,18 @@ a {
   animation: uss-dot-pulse 1.6s ease-in-out infinite;
 }
 
-/* read -> write -> read, cycling in order while the fusion step is active. */
+/* Token chips ripple in sequence, so a sequence reads as a sequence. */
+.uss-chip {
+  animation: uss-chip-breathe 2.6s ease-in-out infinite;
+}
+
+/* The three camera views blink slightly out of phase. */
+.uss-view {
+  animation: uss-view-blink 2.8s ease-in-out infinite;
+}
+
 .uss-rwr-step {
-  opacity: 0.4;
+  opacity: 0.45;
 }
 
 .uss-rwr.is-live .uss-rwr-step {
@@ -257,10 +288,10 @@ a {
 @keyframes uss-halo-pulse {
   0%,
   100% {
-    opacity: 0.15;
+    opacity: 0.12;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 
@@ -274,11 +305,31 @@ a {
   }
 }
 
+@keyframes uss-chip-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes uss-view-blink {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
 @keyframes uss-rwr-cycle {
   0%,
   22%,
   100% {
-    opacity: 0.35;
+    opacity: 0.4;
   }
   8%,
   16% {
@@ -290,11 +341,15 @@ a {
   .uss-flow,
   .uss-halo,
   .uss-pulse,
+  .uss-chip,
+  .uss-view,
   .uss-rwr.is-live .uss-rwr-step {
     animation: none !important;
   }
 
-  .uss-rwr-step {
+  .uss-rwr-step,
+  .uss-chip,
+  .uss-view {
     opacity: 1;
   }
 }

@@ -380,6 +380,28 @@ export const siteContent = {
       "FPS is measured on an RTX 4090 for USS; baseline throughput is taken as reported (EVT on an RTX 3090, Uni-NaVid on an A100) rather than re-benchmarked, so the gaps reflect deployment cost rather than controlled latency measurements.",
     ],
   } satisfies TableData,
+  // The looping clips under the title. Ordered so the similar-people case,
+  // which is the one the paper turns on, leads.
+  heroReel: [
+    {
+      tag: "Similar people - spatial prompt",
+      title: "A box holds the right person when both wear black",
+      poster: publicAsset("/assets/posters/demo-02.jpg"),
+      videoSrc: publicAsset("/assets/videos/demo-02.mp4"),
+    },
+    {
+      tag: "Pedestrian distractor",
+      title: "Target identity held while others cross the path",
+      poster: publicAsset("/assets/posters/demo-06.jpg"),
+      videoSrc: publicAsset("/assets/videos/demo-06.mp4"),
+    },
+    {
+      tag: "Narrow corridor",
+      title: "Following through a constrained hallway",
+      poster: publicAsset("/assets/posters/demo-07.jpg"),
+      videoSrc: publicAsset("/assets/videos/demo-07.mp4"),
+    },
+  ],
   promptModalities: [
     {
       id: "text",
