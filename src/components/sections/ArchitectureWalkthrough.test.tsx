@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import ArchitectureWalkthrough from "./ArchitectureWalkthrough";
 import { siteContent } from "@/content/siteContent";
 
+const figure = () => document.querySelector("[data-stage]") as HTMLElement;
+
 describe("ArchitectureWalkthrough", () => {
   it("offers every prompt modality and every pipeline stage", () => {
     render(<ArchitectureWalkthrough />);
@@ -15,17 +17,15 @@ describe("ArchitectureWalkthrough", () => {
     });
   });
 
-  it("switches the figure to the mask prompt and its encoder", async () => {
+  it("moves the prompt marker when a different modality is picked", async () => {
     const user = userEvent.setup();
     render(<ArchitectureWalkthrough />);
 
-    // Stage (a) is where the encoder is named; it is the one shown first.
-    expect(screen.getByText("Box Encoder")).toBeInTheDocument();
+    expect(figure()).toHaveAttribute("data-modality", "box");
 
     await user.click(screen.getByRole("tab", { name: "Mask" }));
 
-    expect(screen.getByText("Mask Encoder")).toBeInTheDocument();
-    expect(screen.queryByText("Box Encoder")).not.toBeInTheDocument();
+    expect(figure()).toHaveAttribute("data-modality", "mask");
     expect(screen.getByRole("tab", { name: "Mask" })).toHaveAttribute("aria-selected", "true");
   });
 
@@ -35,24 +35,23 @@ describe("ArchitectureWalkthrough", () => {
     try {
       render(<ArchitectureWalkthrough />);
 
-      // Every part is on one canvas, so the spotlight - not the presence of a
-      // box - is what says which stage is being explained.
-      const figure = () => screen.getByRole("img").getAttribute("aria-label");
-      expect(figure()).toContain("part input");
+      // The spotlight, not the presence of a box, says which part is lit: the
+      // whole figure is on screen the entire time.
+      expect(figure()).toHaveAttribute("data-stage", "input");
 
       act(() => {
         vi.advanceTimersByTime(6100);
       });
-      expect(figure()).toContain("part align");
+      expect(figure()).toHaveAttribute("data-stage", "align");
 
       // Picking a stage hands control to the reader, and the timer stops.
       fireEvent.click(screen.getByText("Waypoint prediction head"));
-      expect(figure()).toContain("part head");
+      expect(figure()).toHaveAttribute("data-stage", "head");
 
       act(() => {
         vi.advanceTimersByTime(18000);
       });
-      expect(figure()).toContain("part head");
+      expect(figure()).toHaveAttribute("data-stage", "head");
     } finally {
       vi.useRealTimers();
     }

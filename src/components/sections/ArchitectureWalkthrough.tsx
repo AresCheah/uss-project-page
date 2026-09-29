@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { siteContent, type ModalityId } from "@/content/siteContent";
-import MethodScenes from "@/components/ui/MethodScenes";
+import MethodFigure from "@/components/ui/MethodFigure";
 import { useInView } from "@/hooks/useInView";
 import { cn } from "@/lib/utils";
 
@@ -78,12 +78,14 @@ export default function ArchitectureWalkthrough() {
         </div>
       </div>
 
+      {/* The paper figure is dense; on a narrow screen it pans rather than
+          shrinking its labels out of legibility. */}
       <div className="-mx-1 overflow-x-auto px-5 pt-5 sm:mx-0 sm:px-7">
-        <MethodScenes
+        <MethodFigure
           stage={step.id}
           modality={modality}
           playing={running}
-          className="mx-auto min-w-[820px]"
+          className="min-w-[860px]"
         />
       </div>
 
@@ -138,7 +140,7 @@ export default function ArchitectureWalkthrough() {
                         "block h-full rounded-full bg-[color:var(--cyan)]",
                         live && running ? "ms-progress" : "",
                       )}
-                      style={{ width: live && !running ? "100%" : undefined }}
+                      style={{ width: live && !running ? "100%" : "0%" }}
                     />
                   </span>
                 </button>

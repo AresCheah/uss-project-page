@@ -240,28 +240,37 @@ a {
   letter-spacing: 0.1em;
 }
 
-/* The part under the spotlight; the others recede but stay readable. */
-.ms-part-g {
-  transition: opacity 0.5s ease;
+/* ---------------------------------------------------------------------------
+   Method figure animation
+   ------------------------------------------------------------------------ */
+
+.mf-veil,
+.mf-row {
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ms-part-g.is-on {
-  opacity: 1;
+.mf-ring,
+.mf-row {
+  transition:
+    x 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    y 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.6s ease;
 }
 
-.ms-part-g.is-off {
-  opacity: 0.26;
+.mf-ring {
+  animation: mf-ring 2.8s ease-in-out infinite;
 }
 
-.ms-slot {
-  transition: opacity 0.5s ease;
+/* One pass of light across the part that just arrived. */
+.mf-sweep {
+  animation: mf-sweep 1.5s cubic-bezier(0.33, 0, 0.2, 1) 0.15s both;
 }
 
-.ms-part {
-  font-family: "Source Serif 4", Georgia, serif;
-  font-size: 16px;
-  font-weight: 700;
-  fill: #1d2a31;
+/* Fills over one stage's dwell time, so the rail doubles as a timer. */
+.ms-progress {
+  animation: ms-progress 6s linear forwards;
 }
 
 /* Text blocks that swap with the stage. */
@@ -269,38 +278,23 @@ a {
   animation: ms-scene-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Tokens ripple along a row, so a sequence reads as a sequence. */
-.ms-chip {
-  animation: ms-chip-in 2.4s ease-in-out infinite;
+@keyframes mf-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 
-/* Dashes marching along a connection: the data actually moving. */
-.ms-flow {
-  animation: ms-dash 1.1s linear infinite;
-}
-
-.ms-flow-solid {
-  stroke-dasharray: 8 6;
-  animation: ms-dash 1.6s linear infinite;
-}
-
-.ms-pulse {
-  animation: ms-pulse 1.6s ease-in-out infinite;
-}
-
-/* The read/write pair of the hybrid attention block. */
-.ms-rw {
-  animation: ms-rw 1.8s ease-in-out infinite;
-}
-
-.ms-bar {
-  transform-origin: bottom;
-  animation: ms-bar 2.4s ease-in-out infinite;
-}
-
-/* Fills over one stage's dwell time, so the rail doubles as a timer. */
-.ms-progress {
-  animation: ms-progress 6s linear forwards;
+@keyframes mf-sweep {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--mf-travel));
+  }
 }
 
 @keyframes ms-progress {
@@ -315,7 +309,7 @@ a {
 @keyframes ms-scene-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -323,69 +317,17 @@ a {
   }
 }
 
-@keyframes ms-chip-in {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes ms-dash {
-  to {
-    stroke-dashoffset: -28;
-  }
-}
-
-@keyframes ms-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes ms-rw {
-  0%,
-  100% {
-    opacity: 0.25;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes ms-bar {
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .ms-scene,
-  .ms-part-g,
-  .ms-slot,
-  .ms-progress,
-  .ms-chip,
-  .ms-flow,
-  .ms-flow-solid,
-  .ms-pulse,
-  .ms-rw,
-  .ms-bar {
+  .mf-ring,
+  .mf-sweep,
+  .ms-scene {
     animation: none !important;
   }
 
-  .ms-chip,
-  .ms-rw,
-  .ms-bar {
-    opacity: 1;
+  .mf-sweep {
+    opacity: 0;
   }
+
+  /* The stage timer keeps running: it is the cue that the figure is
+     advancing, not decoration. */
 }

@@ -209,6 +209,7 @@ export const siteContent = {
   ] satisfies Contribution[],
   method: {
     image: publicAsset("/assets/figures/method.png"),
+    alt: "The USS method figure: input encoding, vision-prompt alignment, a waypoint prediction head, and an action-conditioned world model used only during training.",
     modules: [
       {
         title: "Prompt Encoding",
