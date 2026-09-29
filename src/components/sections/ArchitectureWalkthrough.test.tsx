@@ -15,19 +15,21 @@ describe("ArchitectureWalkthrough", () => {
     });
   });
 
-  it("switches the diagram to the mask route, which bypasses prompt tokens", async () => {
+  it("switches the figure to the mask prompt and its encoder", async () => {
     const user = userEvent.setup();
     render(<ArchitectureWalkthrough />);
 
-    // The box prompt is the default and reaches fusion as prompt tokens.
-    expect(screen.getByText("prompt tokens")).toBeInTheDocument();
-    expect(screen.queryByText("dense anchor")).not.toBeInTheDocument();
+    // Every rect is 0x0 in jsdom, so the scroll tracker lands on the last
+    // stage; pick stage (a) explicitly, which is where the encoder is named.
+    await user.click(screen.getByText("Input encoding"));
+
+    // The box prompt is the default.
+    expect(screen.getByText("Box Encoder")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Mask" }));
 
-    // A mask is stored in memory as a dense anchor instead.
-    expect(screen.getByText("dense anchor")).toBeInTheDocument();
-    expect(screen.queryByText("prompt tokens")).not.toBeInTheDocument();
+    expect(screen.getByText("Mask Encoder")).toBeInTheDocument();
+    expect(screen.queryByText("Box Encoder")).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Mask" })).toHaveAttribute("aria-selected", "true");
   });
 });

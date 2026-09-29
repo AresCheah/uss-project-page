@@ -40,11 +40,11 @@ describe("site content", () => {
       "box",
       "mask",
     ]);
+    // The four parts of the method figure, in the paper's order.
     expect(siteContent.architectureSteps.map((step) => step.id)).toEqual([
-      "prompt",
-      "vision",
-      "fusion",
-      "waypoints",
+      "input",
+      "align",
+      "head",
       "world",
     ]);
 

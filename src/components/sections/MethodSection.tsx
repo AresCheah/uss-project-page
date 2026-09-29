@@ -29,22 +29,6 @@ export default function MethodSection() {
             </figcaption>
           </figure>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            {siteContent.method.modules.map((module, index) => (
-              <article key={module.title} className="panel p-6">
-                <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700">
-                    {String.fromCharCode(97 + index)}
-                  </span>
-                  <span>Method Block</span>
-                </div>
-                <h3 className="mt-4 font-display text-[1.7rem] leading-tight text-ivory">
-                  {module.title}
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-slate-600">{module.text}</p>
-              </article>
-            ))}
-          </div>
         </div>
       </div>
     </AnimatedSection>

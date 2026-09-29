@@ -214,98 +214,78 @@ a {
 }
 
 /* ---------------------------------------------------------------------------
-   Architecture diagram
+   Method figure scenes
    ------------------------------------------------------------------------ */
 
-.uss-node rect,
-.uss-edge-path {
-  transition:
-    fill 0.45s ease,
-    stroke 0.45s ease,
-    stroke-width 0.45s ease,
-    opacity 0.45s ease;
-}
-
-.uss-kicker {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.uss-title {
+.ms-label {
   font-family: "Source Serif 4", Georgia, serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
+  fill: #24282c;
 }
 
-.uss-detail {
-  font-size: 10.5px;
+.ms-sub {
+  font-size: 11px;
+  fill: #55636b;
 }
 
-.uss-edge-label {
-  font-size: 9.5px;
-  letter-spacing: 0.02em;
+.ms-cap {
+  font-size: 11px;
+  fill: #7d8a91;
 }
 
-/* Marching dashes along an active edge. */
-.uss-flow {
-  animation: uss-dash 1.15s linear infinite;
+.ms-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
-.uss-halo {
-  animation: uss-halo-pulse 2.4s ease-in-out infinite;
+/* Each scene fades and lifts in when the stage changes. */
+.ms-scene {
+  animation: ms-scene-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.uss-pulse {
-  animation: uss-dot-pulse 1.6s ease-in-out infinite;
+/* Tokens ripple along a row, so a sequence reads as a sequence. */
+.ms-chip {
+  animation: ms-chip-in 2.4s ease-in-out infinite;
 }
 
-/* Token chips ripple in sequence, so a sequence reads as a sequence. */
-.uss-chip {
-  animation: uss-chip-breathe 2.6s ease-in-out infinite;
+/* Dashes marching along a connection: the data actually moving. */
+.ms-flow {
+  animation: ms-dash 1.1s linear infinite;
 }
 
-/* The three camera views blink slightly out of phase. */
-.uss-view {
-  animation: uss-view-blink 2.8s ease-in-out infinite;
+.ms-flow-solid {
+  stroke-dasharray: 8 6;
+  animation: ms-dash 1.6s linear infinite;
 }
 
-.uss-rwr-step {
-  opacity: 0.45;
+.ms-pulse {
+  animation: ms-pulse 1.6s ease-in-out infinite;
 }
 
-.uss-rwr.is-live .uss-rwr-step {
-  animation: uss-rwr-cycle 1.35s ease-in-out infinite;
+/* The read/write pair of the hybrid attention block. */
+.ms-rw {
+  animation: ms-rw 1.8s ease-in-out infinite;
 }
 
-@keyframes uss-dash {
+.ms-bar {
+  transform-origin: bottom;
+  animation: ms-bar 2.4s ease-in-out infinite;
+}
+
+@keyframes ms-scene-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
   to {
-    stroke-dashoffset: -32;
-  }
-}
-
-@keyframes uss-halo-pulse {
-  0%,
-  100% {
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.45;
-  }
-}
-
-@keyframes uss-dot-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes uss-chip-breathe {
+@keyframes ms-chip-in {
   0%,
   100% {
     opacity: 0.55;
@@ -315,41 +295,56 @@ a {
   }
 }
 
-@keyframes uss-view-blink {
+@keyframes ms-dash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@keyframes ms-pulse {
   0%,
   100% {
-    opacity: 0.6;
+    opacity: 0.5;
   }
-  45% {
+  50% {
     opacity: 1;
   }
 }
 
-@keyframes uss-rwr-cycle {
+@keyframes ms-rw {
   0%,
-  22%,
   100% {
-    opacity: 0.4;
+    opacity: 0.25;
   }
-  8%,
-  16% {
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ms-bar {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
     opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .uss-flow,
-  .uss-halo,
-  .uss-pulse,
-  .uss-chip,
-  .uss-view,
-  .uss-rwr.is-live .uss-rwr-step {
+  .ms-scene,
+  .ms-chip,
+  .ms-flow,
+  .ms-flow-solid,
+  .ms-pulse,
+  .ms-rw,
+  .ms-bar {
     animation: none !important;
   }
 
-  .uss-rwr-step,
-  .uss-chip,
-  .uss-view {
+  .ms-chip,
+  .ms-rw,
+  .ms-bar {
     opacity: 1;
   }
 }

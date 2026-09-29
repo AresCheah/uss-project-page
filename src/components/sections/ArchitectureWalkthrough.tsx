@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { siteContent, type ModalityId } from "@/content/siteContent";
-import ArchitectureDiagram from "@/components/ui/ArchitectureDiagram";
+import MethodScenes from "@/components/ui/MethodScenes";
 import { cn } from "@/lib/utils";
 
 export default function ArchitectureWalkthrough() {
   const steps = siteContent.architectureSteps;
   const modalities = siteContent.promptModalities;
 
-  const [activeStep, setActiveStep] = useState(steps[0]?.id ?? "prompt");
+  const [activeStep, setActiveStep] = useState(steps[0]?.id ?? "input");
   const [modality, setModality] = useState<ModalityId>("box");
   const stepRefs = useRef(new Map<string, HTMLButtonElement>());
 
@@ -82,7 +82,7 @@ export default function ArchitectureWalkthrough() {
               Interactive architecture
             </p>
             <p className="mt-1.5 text-sm leading-6 text-slate-600">
-              Pick how the target is designated, then scroll to follow that prompt through the policy.
+              Pick how the target is designated, then scroll to walk the data through the four parts of the method figure.
             </p>
           </div>
 
@@ -111,13 +111,12 @@ export default function ArchitectureWalkthrough() {
           </div>
         </div>
 
-        {/* The diagram is wide by nature; on narrow screens it pans sideways
-            instead of shrinking its labels into illegibility. */}
+        {/* One stage at a time, so each can be drawn large enough to read. */}
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <ArchitectureDiagram
-            activeStep={activeStep}
+          <MethodScenes
+            stage={activeStep}
             modality={modality}
-            className="mx-auto min-w-[680px] max-h-[42vh]"
+            className="mx-auto min-w-[620px] max-h-[40vh]"
           />
         </div>
 
@@ -184,7 +183,7 @@ export default function ArchitectureWalkthrough() {
                       live ? "opacity-100" : "opacity-0",
                     )}
                   >
-                    {step.id === "prompt" ? activeModality.strength : null}
+                    {step.id === "input" ? activeModality.strength : null}
                   </span>
                 </span>
               </button>
