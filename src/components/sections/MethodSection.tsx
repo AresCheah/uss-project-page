@@ -77,7 +77,7 @@ export default function MethodSection() {
         />
         <p className="sy-hint">
           <ArrowDown size={16} aria-hidden="true" />
-          Scroll through the five steps; the figure follows along.
+          Scroll through the five steps; the figure plays how the tokens of each step move.
         </p>
 
         <div className={`sy${live ? " sy-live" : ""}`}>
