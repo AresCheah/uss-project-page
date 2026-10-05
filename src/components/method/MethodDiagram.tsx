@@ -1,11 +1,10 @@
+import type { ReactNode } from "react";
 import { siteContent, type MethodStep, type ModalityId } from "@/content/siteContent";
 
 type StageId = MethodStep["id"];
+type Token = "p" | "q" | "v" | "s" | "g" | "…";
 
 const ORDER: StageId[] = ["prompt", "vision", "fusion", "head", "world"];
-
-/** Prompt tokens drawn per modality: [CLS] + nouns, 4 and 9 RoIAlign tokens; a mask enters through memory. */
-const PROMPT_TOKENS: Record<ModalityId, number> = { text: 5, point: 4, box: 9, mask: 0 };
 
 const MODALITY_CLASS: Record<ModalityId, string> = {
   text: "m-text",
@@ -14,348 +13,448 @@ const MODALITY_CLASS: Record<ModalityId, string> = {
   mask: "m-mask",
 };
 
-function tokens(n: number, x: number, y: number, size: number, step: number, className: string) {
-  return Array.from({ length: n }, (_, i) => (
-    <rect key={i} x={x + i * step} y={y} width={size} height={size} rx={2.5} className={className} />
-  ));
-}
+/* The paper's order of the four prompt rows in part (a). */
+const ROWS: Array<{ id: ModalityId; label: string[]; encoder: string; y: number }> = [
+  { id: "text", label: ["Text"], encoder: "Text", y: 52 },
+  { id: "box", label: ["Bounding", "Box"], encoder: "Box", y: 138 },
+  { id: "point", label: ["Point"], encoder: "Point", y: 224 },
+  { id: "mask", label: ["Mask"], encoder: "Mask", y: 310 },
+];
 
-function grid(cols: number, rows: number, x: number, y: number, size: number, step: number, className: string) {
-  const cells = [];
-  for (let r = 0; r < rows; r += 1) {
-    for (let c = 0; c < cols; c += 1) {
-      cells.push(<rect key={`${r}-${c}`} x={x + c * step} y={y + r * step} width={size} height={size} rx={2.5} className={className} />);
-    }
-  }
-  return cells;
-}
+const image = (id: ModalityId) => siteContent.promptModalities.find((item) => item.id === id)!.image;
 
-function Header({ n, title }: { n: number; title: string }) {
+/** A row of tokens; "…" draws an ellipsis in place of a token. */
+function TokenRow({ items, x, y, size = 20, step = 40 }: { items: Token[]; x: number; y: number; size?: number; step?: number }) {
   return (
     <>
-      <rect x={0} y={0} width={22} height={22} rx={6} className="dg-badge" />
-      <text x={11} y={15.5} textAnchor="middle" className="dg-bn">
-        {n}
-      </text>
-      <text x={32} y={16} className="dg-hd">
-        {title}
-      </text>
+      {items.map((kind, i) =>
+        kind === "…" ? (
+          <text key={i} x={x + i * step + size / 2} y={y + size * 0.62} textAnchor="middle" className="f-dots">
+            …
+          </text>
+        ) : (
+          <rect key={i} x={x + i * step} y={y} width={size} height={size} rx={size * 0.2} className={`tk tk-${kind}`} />
+        ),
+      )}
+    </>
+  );
+}
+
+function Label({ x, y, children, className = "f-lb" }: { x: number; y: number; children: ReactNode; className?: string }) {
+  return (
+    <text x={x} y={y} textAnchor="middle" className={className}>
+      {children}
+    </text>
+  );
+}
+
+/** A trapezoid encoder, wide on the left and narrowing to the right, as in the paper. */
+function Encoder({ x, y, w, h, lines }: { x: number; y: number; w: number; h: number; lines: string[] }) {
+  const inset = Math.min(h * 0.18, 14);
+  return (
+    <>
+      <path d={`M${x},${y} L${x + w},${y + inset} L${x + w},${y + h - inset} L${x},${y + h} Z`} className="f-enc" />
+      {lines.map((line, i) => (
+        <Label key={line} x={x + w / 2} y={y + h / 2 + (i - (lines.length - 1) / 2) * 15 + 4.5} className="f-enc-t">
+          {line}
+        </Label>
+      ))}
     </>
   );
 }
 
 /**
- * A schematic of the USS architecture (the paper's Figure 2), drawn so each
- * part can be dimmed or lit as the reader moves through the method steps.
- * `active` is null when nothing is being followed, which draws every stage at
- * full strength.
+ * The USS architecture redrawn after Figure 2 of the paper: (a) input
+ * encoding, (b) vision-prompt alignment, (c) the waypoint head and (d) the
+ * training-only world model. The part being read is outlined and the others
+ * fade; `active` is null when nothing is followed, which draws all of it.
  */
 export default function MethodDiagram({ active, modality }: { active: StageId | null; modality: ModalityId }) {
   const reached = active ? ORDER.indexOf(active) : -1;
-  const stageClass = (id: StageId) => {
-    if (!active) return "dg-stage";
+  const stateOf = (id: StageId) => {
+    if (!active) return "";
     const index = ORDER.indexOf(id);
-    if (index === reached) return "dg-stage is-on";
-    return index < reached ? "dg-stage is-past" : "dg-stage is-idle";
+    if (index === reached) return " is-on";
+    return index < reached ? " is-past" : " is-idle";
   };
-  const flowing = (...ids: StageId[]) => (active && ids.includes(active) ? "dg-link is-flow" : "dg-link");
-
-  const nPrompt = PROMPT_TOKENS[modality];
+  // Part (a) holds two steps, so its title stays lit for either.
+  const titleA = !active || active === "prompt" || active === "vision" ? "" : " is-past";
+  const link = (kind: string, ...ids: StageId[]) => {
+    if (!active) return `f-link ${kind}`;
+    return ids.includes(active) ? `f-link ${kind} is-flow` : `f-link ${kind} is-dim`;
+  };
   const isMask = modality === "mask";
-  const current = siteContent.promptModalities.find((item) => item.id === modality)!;
-  const promptStart = 162 - (nPrompt * 16 - 4) / 2;
 
   return (
     <svg
       className="dg"
-      viewBox="0 0 640 700"
+      viewBox="0 0 1000 570"
       role="img"
-      aria-label="Schematic of the USS architecture: prompt encoding, visual encoding with memory, vision-prompt fusion, the waypoint head, and the training-only world model."
+      aria-label="The USS architecture after Figure 2 of the paper: (a) input encoding of the prompt and of the RGB stream with memory, (b) vision-prompt alignment, (c) the waypoint prediction head, and (d) the action-conditioned world model used in training."
       data-active={active ?? "all"}
       data-modality={modality}
     >
       <defs>
-        <marker id="dg-ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--heading)" />
-        </marker>
-        <marker id="dg-ah-mut" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--axis)" />
-        </marker>
-        <marker id="dg-ah-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--blue)" />
-        </marker>
-        <marker id="dg-ah-teal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--teal)" />
-        </marker>
-        <marker id="dg-ah-purple" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--purple)" />
-        </marker>
-        <clipPath id="dg-cam">
-          <rect x={344} y={74} width={56} height={40} rx={4} />
-        </clipPath>
+        {[
+          ["ah-ink", "#2F4D6B"],
+          ["ah-gray", "#6B6F76"],
+          ["ah-pink", "#E46F8C"],
+          ["ah-blue", "#3C7DB5"],
+          ["ah-mask", "#C23FC9"],
+        ].map(([id, fill]) => (
+          <marker key={id} id={id} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill={fill} />
+          </marker>
+        ))}
+        <pattern id="f-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="6" height="6" fill="#DDE9DD" />
+          <line x1="1" y1="0" x2="1" y2="6" stroke="#5F7F5F" strokeWidth="2.4" />
+        </pattern>
       </defs>
 
-      {/* links between stages, drawn first so the panels sit on top */}
-      <path d="M162,206 C162,240 120,246 120,276" className={flowing("prompt", "fusion")} markerEnd="url(#dg-ah-mut)" />
-      <path d="M528,206 V278" className={flowing("vision", "fusion")} markerEnd="url(#dg-ah-mut)" />
-      <path d="M92,402 V480" className={flowing("fusion", "head")} markerEnd="url(#dg-ah-mut)" />
-      <path d="M244,512 C244,600 191,596 191,636" className={`${flowing("head", "world")} dg-dash`} markerEnd="url(#dg-ah-mut)" />
+      {/* ---------------------------------------------------------------- links between parts */}
+      <path d="M178,470 H190 V190" className={link("pink", "prompt", "vision")} />
+      {[190, 276, 362].map((y) => (
+        <path key={y} d={`M190,${y} H203`} className={link("pink", "prompt", "vision")} markerEnd="url(#ah-pink)" />
+      ))}
+      <path d="M286,182 H298 V84 H307" className={link("pink", "prompt", "fusion")} markerEnd="url(#ah-pink)" />
+      <path d="M292,470 H298 V272 H307" className={link("pink", "vision", "fusion")} markerEnd="url(#ah-pink)" />
+      <path d="M608,466 H630 V84 H669" className={link("pink", "fusion", "head")} markerEnd="url(#ah-pink)" />
+      <path d="M672,98 H650 V366 H659" className={link("blue", "head", "world")} markerEnd="url(#ah-blue)" />
+      <path d="M660,247 H644 V426 H659" className={link("blue", "head", "world")} markerEnd="url(#ah-blue)" />
+      {isMask ? <path d="M236,378 V416" className={link("mask-route", "prompt", "vision")} markerEnd="url(#ah-mask)" /> : null}
 
-      {/* 1 · prompt encoding */}
-      <g className={stageClass("prompt")} data-stage="prompt">
-        <rect x={12} y={12} width={300} height={196} rx={16} className="dg-frame" />
-        <g transform="translate(26 26)">
-          <Header n={1} title="PROMPT" />
-        </g>
-        <text x={298} y={42} textAnchor="end" className="dg-note">
-          once, at t = 1
-        </text>
-        {siteContent.promptModalities.map((item, i) => {
-          const x = 28 + i * 68;
-          const selected = item.id === modality;
+      <text x={146} y={27} textAnchor="middle" className={`f-title${titleA}`}>
+        a. Input Encoding
+      </text>
+
+      {/* ---------------------------------------------------------------- (a) prompt rows */}
+      <g className={`f-stage${stateOf("prompt")}`} data-stage="prompt">
+        <rect x={0} y={36} width={292} height={374} rx={14} className="f-ring" />
+        <rect x={6} y={42} width={280} height={362} rx={10} className="f-dash" />
+        {ROWS.map((row) => {
+          const selected = row.id === modality;
           return (
-            <g key={item.id} className={MODALITY_CLASS[item.id]}>
-              <path
-                d={`M${x + 30},88 C${x + 30},104 162,100 162,114`}
-                className={`dg-feed${selected ? " is-sel" : ""}`}
-              />
-              <g className={`dg-chip${selected ? " is-sel" : ""}`}>
-                <rect x={x} y={60} width={60} height={28} rx={8} />
-                <text x={x + 30} y={78.5} textAnchor="middle">
-                  {item.label}
-                </text>
-              </g>
+            <g key={row.id} className={`${MODALITY_CLASS[row.id]}${selected ? " f-row-sel" : ""}`}>
+              <rect x={16} y={row.y} width={260} height={78} rx={10} className="f-row" />
+              {row.label.map((line, i) => (
+                <Label key={line} x={52} y={row.y + (row.label.length === 1 ? 44 : 36 + i * 17)} className="f-row-t">
+                  {line}
+                </Label>
+              ))}
+              {row.id === "text" ? (
+                <>
+                  <rect x={90} y={row.y + 10} width={84} height={58} rx={3} className="f-quote" />
+                  {["“follow the", "man wearing", "black shirt", "and shorts”"].map((line, i) => (
+                    <Label key={line} x={132} y={row.y + 23 + i * 12} className="f-quote-t">
+                      {line}
+                    </Label>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <image href={image(row.id)} x={90} y={row.y + 10} width={84} height={58} preserveAspectRatio="xMidYMid slice" />
+                  <rect x={90} y={row.y + 10} width={84} height={58} className="f-frame" />
+                </>
+              )}
+              <path d={`M178,${row.y + 39} H203`} className="f-arr" markerEnd="url(#ah-ink)" />
+              <Encoder x={206} y={row.y + 11} w={60} h={56} lines={[row.encoder, "Encoder"]} />
             </g>
           );
         })}
-        <rect x={82} y={116} width={160} height={30} rx={8} className="dg-box" />
-        <text x={162} y={135.5} textAnchor="middle" className="dg-lb">
-          Prompt encoder
-        </text>
-        {isMask ? (
-          <>
-            <path d="M242,131 C292,131 300,165 340,165 H492" className="dg-mask-route" markerEnd="url(#dg-ah-purple)" />
-            <text x={162} y={177} textAnchor="middle" className="dg-anchor-t">
-              dense prior → memory
-            </text>
-          </>
-        ) : (
-          tokens(nPrompt, promptStart, 164, 12, 16, "dg-tok-y")
-        )}
-        <text x={162} y={198} textAnchor="middle" className="dg-sm">
-          Y · {current.short}
-        </text>
       </g>
 
-      {/* 2 · visual encoding with temporal memory */}
-      <g className={stageClass("vision")} data-stage="vision">
-        <rect x={328} y={12} width={300} height={196} rx={16} className="dg-frame" />
-        <g transform="translate(342 26)">
-          <Header n={2} title="VISION + MEMORY" />
-        </g>
-        <text x={614} y={42} textAnchor="end" className="dg-note">
-          per view
-        </text>
-        <rect x={352} y={64} width={56} height={40} rx={4} className="dg-frames" />
-        <rect x={348} y={69} width={56} height={40} rx={4} className="dg-frames" />
-        <image
-          href={siteContent.promptModalities[0].image}
-          x={344}
-          y={74}
-          width={56}
-          height={40}
-          preserveAspectRatio="xMidYMid slice"
-          clipPath="url(#dg-cam)"
-        />
-        <rect x={344} y={74} width={56} height={40} rx={4} fill="none" className="dg-frames" />
-        <text x={374} y={130} textAnchor="middle" className="dg-sm">
-          RGB · 3 views
-        </text>
-        <path d="M404,92 H410" className="dg-arr" markerEnd="url(#dg-ah)" />
-        <path d="M413,62 L487,73 L487,111 L413,122 Z" className="dg-box" />
-        <text x={450} y={95} textAnchor="middle" className="dg-mono">
-          PE-Spatial
-        </text>
-        <path d="M488,92 H497" className="dg-arr" markerEnd="url(#dg-ah)" />
-        {grid(4, 3, 500, 70, 11, 15, "dg-tok-v")}
-        <text x={528} y={128} textAnchor="middle" className="dg-sm">
-          V_t · patch tokens
-        </text>
-        {[3, 2, 1].map((k) => (
-          <rect key={k} x={500 + k * 4} y={150 - k * 4} width={56} height={30} rx={4} className="dg-frames" />
+      {/* ---------------------------------------------------------------- (a) visual stream + memory */}
+      <g className={`f-stage${stateOf("vision")}`} data-stage="vision">
+        <rect x={0} y={414} width={298} height={148} rx={14} className="f-ring" />
+        <rect x={6} y={420} width={90} height={134} rx={10} className="f-box" />
+        <image href={image("text")} x={16} y={430} width={70} height={52} preserveAspectRatio="xMidYMid slice" />
+        <rect x={16} y={430} width={70} height={52} className="f-frame" />
+        <Label x={51} y={507} className="f-sm-b">
+          Visual
+        </Label>
+        <Label x={51} y={522} className="f-sm-b">
+          Observation
+        </Label>
+        <path d="M98,487 H113" className="f-arr" markerEnd="url(#ah-ink)" />
+        <Encoder x={116} y={426} w={60} h={122} lines={["Vision", "Encoder"]} />
+        <path d="M178,487 H195" className="f-arr" markerEnd="url(#ah-ink)" />
+        <rect x={198} y={420} width={94} height={134} rx={10} className="f-box" />
+        {[0, 1, 2, 3].map((k) => (
+          <g key={k}>
+            <image
+              href={siteContent.heroReel[k % siteContent.heroReel.length].poster}
+              x={206 + k * 8}
+              y={432 + k * 6}
+              width={52}
+              height={38}
+              preserveAspectRatio="xMidYMid slice"
+            />
+            <rect x={206 + k * 8} y={432 + k * 6} width={52} height={38} className={k === 3 && isMask ? "f-frame f-anchor" : "f-frame"} />
+          </g>
         ))}
-        <rect x={500} y={150} width={56} height={30} rx={4} className="dg-soft" />
+        <Label x={245} y={509} className="f-sm-b">
+          Memory
+        </Label>
+        <Label x={245} y={524} className="f-sm-b">
+          Attention
+        </Label>
         {isMask ? (
-          <>
-            <rect x={504} y={154} width={48} height={22} rx={4} className="dg-anchor" />
-            <text x={528} y={168.5} textAnchor="middle" className="dg-anchor-t">
-              anchor
-            </text>
-          </>
-        ) : (
-          <text x={528} y={169} textAnchor="middle" className="dg-mono">
-            16 frames
-          </text>
-        )}
-        <path d="M584,165 C604,165 604,90 568,90" className="dg-thin" markerEnd="url(#dg-ah-mut)" />
-        <text x={612} y={132} textAnchor="end" className="dg-sm" transform="rotate(-90 612 132)">
-          attend
-        </text>
-        <text x={528} y={198} textAnchor="middle" className="dg-sm">
-          sliding memory bank
-        </text>
+          <Label x={245} y={542} className="f-mask-t">
+            + mask anchor
+          </Label>
+        ) : null}
       </g>
 
-      {/* 3 · vision-prompt fusion */}
-      <g className={stageClass("fusion")} data-stage="fusion">
-        <rect x={12} y={232} width={616} height={178} rx={16} className="dg-frame" />
-        <g transform="translate(26 246)">
-          <Header n={3} title="VISION-PROMPT FUSION" />
-        </g>
-        <text x={614} y={262} textAnchor="end" className="dg-note">
-          read · write · read
+      {/* ---------------------------------------------------------------- (b) vision-prompt alignment */}
+      <g className={`f-stage${stateOf("fusion")}`} data-stage="fusion">
+        <rect x={302} y={6} width={314} height={502} rx={14} className="f-ring" />
+        <text x={459} y={27} textAnchor="middle" className="f-title">
+          b. Vision-Prompt Alignment
         </text>
-        <rect x={22} y={280} width={198} height={56} rx={10} className="dg-soft dg-dash" />
-        <text x={212} y={293} textAnchor="end" className="dg-sm">
-          self-attn
-        </text>
-        {tokens(10, 30, 288, 10, 13, "dg-tok-q")}
-        <text x={30} y={326} className="dg-sm">
-          q ×10
-        </text>
+
+        <rect x={310} y={42} width={142} height={70} rx={8} className="f-card f-card-warm" />
+        <Label x={381} y={63}>Prompt Tokens</Label>
+        <rect x={322} y={74} width={118} height={28} rx={8} className="f-dash-warm" />
         {isMask ? (
-          <text x={72} y={326} className="dg-anchor-t">
-            mask enters via memory
-          </text>
+          <Label x={381} y={92} className="f-mask-t">
+            mask → memory
+          </Label>
         ) : (
-          tokens(nPrompt, 72, 316, 10, 13, "dg-tok-y")
+          <TokenRow items={["p", "p", "…", "p"]} x={334} y={79} size={18} step={28} />
         )}
 
-        <path d="M436,288 H232" className="dg-arr dg-read" markerEnd="url(#dg-ah-blue)" />
-        <text x={334} y={283} textAnchor="middle" className="dg-sm">
-          ① read
-        </text>
-        <path d="M232,308 H436" className="dg-arr dg-write" markerEnd="url(#dg-ah-teal)" />
-        <text x={334} y={303} textAnchor="middle" className="dg-sm">
-          ② write back
-        </text>
-        <path d="M436,328 H232" className="dg-arr dg-read" markerEnd="url(#dg-ah-blue)" />
-        <text x={334} y={323} textAnchor="middle" className="dg-sm">
-          ③ read
-        </text>
+        <rect x={466} y={42} width={142} height={70} rx={8} className="f-card f-card-cool" />
+        <Label x={537} y={63}>Learnable Queries</Label>
+        <rect x={478} y={74} width={118} height={28} rx={8} className="f-dash-cool" />
+        <TokenRow items={["q", "q", "…", "q"]} x={490} y={79} size={18} step={28} />
 
-        {grid(9, 4, 452, 280, 12, 16, "dg-tok-v")}
-        <rect x={497} y={293} width={38} height={50} rx={5} className="dg-focus" />
-        <text x={522} y={360} textAnchor="middle" className="dg-sm">
-          Z · fused visual tokens
-        </text>
+        <path d="M381,112 V125" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <path d="M537,112 V125" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
 
-        <path d="M92,338 V364" className="dg-arr" markerEnd="url(#dg-ah)" />
-        {tokens(10, 30, 372, 10, 13, "dg-tok-qs")}
-        <text x={166} y={381} className="dg-lb">
-          Q
-        </text>
-        <text x={180} y={381} className="dg-sm">
-          sparse prompt-conditioned state, 10 tokens per view
-        </text>
-      </g>
-
-      {/* 4 · waypoint prediction head */}
-      <g className={stageClass("head")} data-stage="head">
-        <rect x={12} y={434} width={616} height={122} rx={16} className="dg-frame" />
-        <g transform="translate(26 448)">
-          <Header n={4} title="WAYPOINT HEAD" />
-        </g>
-        <text x={614} y={464} textAnchor="end" className="dg-note">
-          execute ŵ₁, then re-plan
-        </text>
-        <rect x={28} y={482} width={128} height={30} rx={8} className="dg-box" />
-        <text x={92} y={501.5} textAnchor="middle" className="dg-lb">
-          Shared decoder
-        </text>
-        <path d="M156,497 H176" className="dg-arr" markerEnd="url(#dg-ah)" />
-        <rect x={180} y={482} width={128} height={30} rx={8} className="dg-box" />
-        <text x={244} y={501.5} textAnchor="middle" className="dg-lb">
-          Waypoint decoder
-        </text>
-        <path d="M308,497 H330" className="dg-arr" markerEnd="url(#dg-ah)" />
-
-        {[18, 6, 13].map((h, i) => (
-          <rect key={i} x={36 + i * 12} y={546 - h} width={8} height={h} rx={2} className="dg-vis" />
-        ))}
-        <text x={76} y={544} className="dg-sm">
-          presence per view
-        </text>
-
-        <path d="M348,532 C400,530 430,508 470,504 S560,486 590,486" className="dg-traj" />
+        <rect x={310} y={128} width={298} height={84} rx={8} className="f-sub" />
+        <Label x={459} y={147} className="f-sub-t">
+          1) Self-Attention on Prompt+Query Tokens
+        </Label>
         {[
-          [348, 532],
-          [372, 529],
-          [396, 523],
-          [420, 515],
-          [444, 508],
-          [468, 504],
-          [492, 501],
-          [516, 497],
-          [540, 492],
-          [562, 489],
-        ].map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r={i === 0 ? 5.5 : 3.6} className={i === 0 ? "dg-wp1" : "dg-wp"} />
+          [330, 370],
+          [330, 450],
+          [450, 490],
+          [450, 530],
+          [490, 570],
+        ].map(([a, b]) => (
+          <path
+            key={`${a}-${b}`}
+            d={`M${a},176 Q${(a + b) / 2},${176 - Math.min(26, (b - a) * 0.28)} ${b},176`}
+            className="f-attn"
+            markerEnd="url(#ah-gray)"
+          />
         ))}
-        <text x={348} y={550} textAnchor="middle" className="dg-sm">
-          ŵ₁
+        <TokenRow items={isMask ? ["q", "q", "…", "q", "q", "q", "q"] : ["p", "p", "…", "p", "q", "q", "q"]} x={320} y={178} />
+
+        <path d="M459,212 V225" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+
+        <rect x={310} y={228} width={298} height={174} rx={8} className="f-sub f-sub-warm" />
+        <Label x={459} y={247} className="f-sub-t">
+          2) Hybrid Attention Fusion
+        </Label>
+        <TokenRow items={["v", "v", "…", "v", "v", "v", "v"]} x={320} y={262} />
+        {[0, 1, 3, 4, 5, 6].map((i) => (
+          <path
+            key={i}
+            d={`M${330 + i * 40},287 V309`}
+            className="f-attn"
+            markerStart="url(#ah-gray)"
+            markerEnd="url(#ah-gray)"
+          />
+        ))}
+        <TokenRow items={isMask ? ["q", "q", "…", "q", "q", "q", "q"] : ["p", "p", "…", "p", "p", "q", "q"]} x={320} y={314} />
+        <rect x={320} y={352} width={278} height={28} rx={4} className="f-legend" />
+        <rect x={330} y={360} width={12} height={12} rx={2.5} className="tk tk-p" />
+        <text x={348} y={370} className="f-legend-t">
+          Prompt tokens
         </text>
-        <text x={470} y={530} className="dg-sm">
-          10 egocentric waypoints
+        <rect x={432} y={360} width={12} height={12} rx={2.5} className="tk tk-q" />
+        <text x={450} y={370} className="f-legend-t">
+          Queries
         </text>
-        <circle cx={600} cy={474} r={5} className="dg-person" />
-        <rect x={595.5} y={481} width={9} height={18} rx={4} className="dg-person" />
+        <rect x={512} y={360} width={12} height={12} rx={2.5} className="tk tk-v" />
+        <text x={530} y={370} className="f-legend-t">
+          Visual tokens
+        </text>
+
+        <path d="M459,402 V415" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+
+        <rect x={310} y={418} width={298} height={82} rx={8} className="f-sub" />
+        <Label x={459} y={437} className="f-sub-t f-sub-t-sm">
+          3) Sparse Prompt-Conditioned Representations
+        </Label>
+        <TokenRow items={["q", "q", "q", "q", "…", "q", "q"]} x={320} y={456} />
       </g>
 
-      {/* 5 · action-conditioned world model (training only) */}
-      <g className={`${stageClass("world")} dg-world`} data-stage="world">
-        <rect x={12} y={580} width={616} height={108} rx={16} className="dg-frame" />
-        <g transform="translate(26 594)">
-          <Header n={5} title="WORLD MODEL" />
-        </g>
-        <rect x={164} y={597} width={86} height={20} rx={10} className="dg-pill" />
-        <text x={207} y={611} textAnchor="middle" className="dg-pill-t">
-          training only
-        </text>
-        <text x={614} y={610} textAnchor="end" className="dg-note">
-          removed at inference
+      {/* ---------------------------------------------------------------- (c) waypoint prediction head */}
+      <g className={`f-stage${stateOf("head")}`} data-stage="head">
+        <rect x={652} y={6} width={348} height={286} rx={14} className="f-ring" />
+        <text x={827} y={27} textAnchor="middle" className="f-title">
+          c. Waypoint Prediction Head
         </text>
 
-        <text x={28} y={650} className="dg-mono">
-          Sₜ
+        <rect x={660} y={42} width={198} height={70} rx={8} className="f-card f-card-cool" />
+        <Label x={759} y={63}>Sparse Representations</Label>
+        <rect x={672} y={74} width={174} height={28} rx={8} className="f-dash-cool" />
+        <TokenRow items={["q", "q", "q", "…", "q"]} x={684} y={79} size={18} step={32} />
+
+        <rect x={870} y={42} width={124} height={70} rx={8} className="f-card f-card-green" />
+        <Label x={932} y={63} className="f-lb f-green-t">
+          Visibility Query
+        </Label>
+        <rect x={922} y={79} width={20} height={20} rx={4} className="tk tk-g" />
+
+        <path d="M759,112 V125" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <path d="M932,112 V125" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <rect x={660} y={128} width={334} height={26} rx={6} className="f-plain" />
+        <Label x={827} y={146}>Transformer Decoder</Label>
+        <path d="M759,154 V165" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <path d="M932,154 V165" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+
+        <rect x={660} y={168} width={198} height={26} rx={6} className="f-card f-card-blue" />
+        <Label x={759} y={186} className="f-lb f-ink-t">
+          Waypoint Decoder
+        </Label>
+        <rect x={870} y={168} width={124} height={26} rx={6} className="f-card f-card-green" />
+        <Label x={932} y={186} className="f-lb f-green-t">
+          MLP
+        </Label>
+        <path d="M759,194 V205" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <path d="M932,194 V205" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+
+        <rect x={660} y={208} width={198} height={78} rx={8} className="f-box" />
+        <path d="M690,248 C710,228 726,234 742,244 S778,262 796,248 S820,234 830,236" className="f-curve" />
+        {[
+          [710, 236],
+          [742, 244],
+          [770, 256],
+          [796, 248],
+          [822, 234],
+        ].map(([cx, cy]) => (
+          <circle key={cx} cx={cx} cy={cy} r={4} className="f-dot" />
+        ))}
+        <circle cx={680} cy={236} r={4} className="f-bot" />
+        <rect x={675} y={242} width={10} height={14} rx={3} className="f-bot" />
+        <circle cx={844} cy={224} r={4} className="f-human" />
+        <rect x={840} y={230} width={8} height={15} rx={3} className="f-human" />
+        <Label x={759} y={279}>Trajectory</Label>
+
+        <rect x={870} y={208} width={124} height={78} rx={8} className="f-box f-box-green" />
+        <line x1={888} y1={252} x2={976} y2={252} className="f-axis" />
+        <rect x={904} y={240} width={16} height={12} className="f-bar" />
+        <rect x={942} y={222} width={16} height={30} className="f-bar" />
+        <Label x={912} y={263} className="f-tick">
+          0
+        </Label>
+        <Label x={950} y={263} className="f-tick">
+          1
+        </Label>
+        <Label x={932} y={279} className="f-lb f-green-t">
+          Visibility
+        </Label>
+      </g>
+
+      {/* ---------------------------------------------------------------- (d) action-conditioned world model */}
+      <g className={`f-stage${stateOf("world")}`} data-stage="world">
+        <rect x={652} y={296} width={348} height={272} rx={14} className="f-ring" />
+        <text x={827} y={317} textAnchor="middle" className="f-title f-title-sm">
+          d. Action-Conditioned World Model
         </text>
-        {tokens(4, 46, 641, 9, 12, "dg-tok-qs")}
-        <text x={28} y={674} className="dg-mono">
-          a = vec(Ŵₜ)
+
+        <Label x={708} y={343} className="f-sm-b">
+          Current State
+        </Label>
+        <rect x={662} y={350} width={92} height={32} rx={7} className="f-dash-cool f-fill-cool" />
+        <TokenRow items={["q", "q", "…", "q"]} x={670} y={358} size={16} step={22} />
+        <Label x={708} y={403} className="f-sm-b">
+          Trajectory
+        </Label>
+        <rect x={662} y={410} width={92} height={32} rx={7} className="f-dash-cool f-fill-cool" />
+        <path d="M674,432 C688,418 698,428 710,430 S734,418 746,418" className="f-curve f-curve-sm" />
+        {[
+          [688, 424],
+          [710, 430],
+          [730, 424],
+        ].map(([cx, cy]) => (
+          <circle key={cx} cx={cx} cy={cy} r={2.6} className="f-dot" />
+        ))}
+
+        <path d="M756,366 H765" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <path d="M756,426 H765" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <rect x={768} y={352} width={68} height={90} rx={8} className="f-box" />
+        <g className="f-net">
+          {[0, 60, 120, 180, 240, 300].map((deg) => {
+            const rad = (deg * Math.PI) / 180;
+            return (
+              <g key={deg}>
+                <line x1={802} y1={372} x2={802 + Math.cos(rad) * 9} y2={372 + Math.sin(rad) * 9} />
+                <circle cx={802 + Math.cos(rad) * 9} cy={372 + Math.sin(rad) * 9} r={2} />
+              </g>
+            );
+          })}
+          <circle cx={802} cy={372} r={3} />
+        </g>
+        {["Action", "Fusion", "MLP"].map((line, i) => (
+          <Label key={line} x={802} y={399 + i * 14} className="f-enc-t">
+            {line}
+          </Label>
+        ))}
+        <path d="M838,366 H845" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+
+        <Label x={921} y={343} className="f-sm-b">
+          Action-Conditioned State
+        </Label>
+        <rect x={848} y={350} width={146} height={32} rx={7} className="f-dash-warm f-fill-warm" />
+        <TokenRow items={["s", "s", "…", "s", "s"]} x={860} y={358} size={16} step={26} />
+        <path d="M921,382 V391" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <rect x={848} y={394} width={146} height={24} rx={6} className="f-plain" />
+        <Label x={921} y={410.5} className="f-sm-b">
+          Latent World Model
+        </Label>
+        <path d="M921,418 V429" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <Label x={921} y={443} className="f-sm-b">
+          Predicted Next State
+        </Label>
+        <rect x={848} y={449} width={146} height={30} rx={7} className="f-dash-warm f-fill-warm" />
+        <TokenRow items={["s", "s", "…", "s", "s"]} x={860} y={456} size={16} step={26} />
+        <path d="M921,479 V509" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+
+        <rect x={662} y={490} width={184} height={72} rx={8} className="f-box f-box-green" />
+        <text x={674} y={507} className="f-sm-b f-green-t">
+          Future State Encoding
         </text>
-        <path d="M100,646 C112,646 112,655 124,655" className="dg-thin" markerEnd="url(#dg-ah-mut)" />
-        <path d="M108,670 C116,670 116,658 124,658" className="dg-thin" />
-        <rect x={128} y={640} width={126} height={30} rx={8} className="dg-box" />
-        <text x={191} y={659.5} textAnchor="middle" className="dg-lb">
-          Action-fusion MLP
-        </text>
-        <path d="M254,655 H270" className="dg-arr" markerEnd="url(#dg-ah)" />
-        <rect x={274} y={640} width={112} height={30} rx={8} className="dg-box" />
-        <text x={330} y={659.5} textAnchor="middle" className="dg-lb">
-          Latent predictor
-        </text>
-        <path d="M386,655 H402" className="dg-arr" markerEnd="url(#dg-ah)" />
-        <text x={438} y={636} textAnchor="middle" className="dg-sm">
-          Ŝₜ₊₁
-        </text>
-        {tokens(5, 406, 650, 10, 13, "dg-tok-t")}
-        <text x={503} y={659} textAnchor="middle" className="dg-mono">
-          ↔ SmoothL1
-        </text>
-        <text x={578} y={636} textAnchor="middle" className="dg-sm">
-          EMA target · sg
-        </text>
-        {tokens(5, 546, 650, 10, 13, "dg-tok-e")}
+        <image href={siteContent.heroReel[0].poster} x={672} y={518} width={40} height={30} preserveAspectRatio="xMidYMid slice" />
+        <rect x={672} y={518} width={40} height={30} className="f-frame" />
+        <path d="M714,533 H721" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <rect x={724} y={518} width={42} height={30} rx={4} className="f-plain f-plain-gray" />
+        <Label x={745} y={530} className="f-tiny-b">
+          EMA
+        </Label>
+        <Label x={745} y={542} className="f-tiny-b">
+          Encoder
+        </Label>
+        <path d="M768,533 H775" className="f-arr f-arr-gray" markerEnd="url(#ah-gray)" />
+        <rect x={778} y={521} width={60} height={24} rx={6} className="f-dash-cool f-fill-cool" />
+        <TokenRow items={["v", "v", "v"]} x={784} y={527} size={12} step={17} />
+        <Label x={808} y={557} className="f-tiny">
+          target next state
+        </Label>
+
+        <rect x={858} y={512} width={136} height={36} rx={6} className="f-box" />
+        <Label x={926} y={527} className="f-enc-t">
+          Latent Alignment
+        </Label>
+        <Label x={926} y={541} className="f-enc-t">
+          Loss
+        </Label>
+        <path d="M840,533 H855" className="f-arr f-arr-gray f-sg" markerEnd="url(#ah-gray)" />
+        <circle cx={848} cy={533} r={3.6} className="f-sg-dot" />
       </g>
     </svg>
   );

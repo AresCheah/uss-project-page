@@ -68,7 +68,7 @@ export default function MethodSection() {
 
   return (
     <section id="method" className="section section-alt">
-      <div className="wrap">
+      <div className="wrap wrap-wide">
         <SectionHead
           index="02"
           label="Method"
@@ -77,14 +77,16 @@ export default function MethodSection() {
         />
         <p className="sy-hint">
           <ArrowDown size={16} aria-hidden="true" />
-          Scroll through the pipeline; the diagram follows each step.
+          Scroll through the five steps; the figure follows along.
         </p>
 
         <div className={`sy${live ? " sy-live" : ""}`}>
           <div className="sy-fig-col">
             <div className="sy-sticky">
               <figure className="sy-fig">
-                <MethodDiagram active={active} modality={modality} />
+                <div className="dg-paper">
+                  <MethodDiagram active={active} modality={modality} />
+                </div>
                 <figcaption className="sy-cap">
                   <span className="sy-count">
                     {activeStep ? (
@@ -92,7 +94,7 @@ export default function MethodSection() {
                         Step <b>{activeIndex + 1}</b> of {steps.length} · {activeStep.kicker}
                       </>
                     ) : (
-                      <>Five steps, Figure 2 of the paper</>
+                      <>Figure 2 of the paper, redrawn</>
                     )}
                   </span>
                   <span className="sy-prog" aria-hidden="true">

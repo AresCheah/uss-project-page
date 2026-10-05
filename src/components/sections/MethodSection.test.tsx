@@ -33,6 +33,8 @@ describe("MethodSection", () => {
 
     expect(diagram()).toHaveAttribute("data-modality", "mask");
     expect(screen.getByRole("button", { name: "Mask" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("mask enters via memory")).toBeInTheDocument();
+    // A mask never becomes prompt tokens; it is stored in memory as an anchor.
+    expect(screen.getByText("mask → memory")).toBeInTheDocument();
+    expect(screen.getByText("+ mask anchor")).toBeInTheDocument();
   });
 });

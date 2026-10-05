@@ -68,11 +68,11 @@ function BenchmarkTable() {
       <figcaption>
         <p className="legend">
           <span>
-            <i style={{ background: "var(--teal)" }} />
+            <i style={{ background: "var(--accent)" }} />
             best non-MLLM, language
           </span>
           <span>
-            <i style={{ background: "var(--blue)" }} />
+            <i style={{ background: "var(--sky)" }} />
             best MLLM, language
           </span>
           <span>

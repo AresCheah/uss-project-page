@@ -85,7 +85,6 @@ export const pageSections = [
   { id: "method", label: "Method" },
   { id: "results", label: "Results" },
   { id: "real-robot", label: "Real robot" },
-  { id: "limitations", label: "Limitations" },
   { id: "cite", label: "Cite" },
 ];
 
@@ -250,7 +249,7 @@ export const siteContent = {
         "A PE-Spatial encoder turns each frame into dense patch tokens; all but its last two blocks are frozen. Each camera view keeps a sliding bank of its recent tokens with a sinusoidal time encoding, and the current tokens attend to it.",
         "A mask prompt is stored in this memory as a persistent target anchor.",
       ],
-      lines: ["Z_t = FFN( CrossAttn( SelfAttn(V_t), K_t ) )"],
+      lines: ["Zₜ = FFN(CrossAttn(SelfAttn(Vₜ), Kₜ))"],
       linesTag: "Eq. 1 · temporal memory",
       fine: "Without memory, DT success drops by 11.4 points: the largest effect in the ablation.",
     },
@@ -263,11 +262,11 @@ export const siteContent = {
         "Ten learnable queries per view join the prompt tokens and self-attend. They then read evidence from the visual tokens, write prompt-conditioned information back to emphasize the designated person and suppress distractors, and read the updated stream once more.",
       ],
       lines: [
-        "u′  = SelfAttn([q ; Y])",
-        "uʳ  = FFN( CrossAttn(u′ ← Z) )      read",
-        "Zᶠ  = CrossAttn(Z ← uʳ)             write",
-        "û   = CrossAttn(uʳ ← Zᶠ)            read",
-        "Q   = û[1 : 10]                     sparse state",
+        "u′ = SelfAttn([q ; Y])",
+        "uʳ = FFN(CrossAttn(u′ ← Z))   read",
+        "Zᶠ = CrossAttn(Z ← uʳ)        write",
+        "û  = CrossAttn(uʳ ← Zᶠ)       read",
+        "Q  = û[1 : 10]",
       ],
       linesTag: "Eqs. 5–8 · hybrid-attention fusion",
       fine: "Only the ten query outputs per view move on; the dense tokens stay behind.",
@@ -382,7 +381,7 @@ export const siteContent = {
       },
     ],
     notes: [
-      "Teal and blue mark the best language-prompt result within the non-MLLM and MLLM groups; bold marks the best spatial-prompt result.",
+      "Indigo and sky mark the best language-prompt result within the non-MLLM and MLLM groups; bold marks the best spatial-prompt result.",
       "Spatial prompts use visible-target initialization with the initial heading perturbed within ±20°, because an instance can only be designated once it is visible. Those rows are a separate protocol and are not ranked against either language block, including USS's own.",
       "† grounding with GroundingDINO · ‡ with SoM + GPT-4o · ¶ four-view setting.",
     ],

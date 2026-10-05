@@ -2,7 +2,6 @@ import Footer from "@/components/layout/Footer";
 import TopNav from "@/components/layout/TopNav";
 import CiteSection from "@/components/sections/CiteSection";
 import HeroSection from "@/components/sections/HeroSection";
-import LimitationsSection from "@/components/sections/LimitationsSection";
 import MethodSection from "@/components/sections/MethodSection";
 import OverviewSection from "@/components/sections/OverviewSection";
 import RealRobotSection from "@/components/sections/RealRobotSection";
@@ -21,7 +20,6 @@ export default function Home() {
         <MethodSection />
         <ResultsSection />
         <RealRobotSection />
-        <LimitationsSection />
         <CiteSection />
       </main>
       <Footer />

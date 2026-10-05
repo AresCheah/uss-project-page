@@ -10,11 +10,11 @@ const sectionIds = pageSections.map((section) => section.id);
 export function BrandMark() {
   return (
     <svg className="brand-logo" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#112B45" />
-      <rect x="7" y="7" width="8" height="8" rx="2" fill="#C58A24" />
-      <rect x="17" y="7" width="8" height="8" rx="2" fill="#3E83B5" />
-      <rect x="7" y="17" width="8" height="8" rx="2" fill="#148F86" />
-      <rect x="17" y="17" width="8" height="8" rx="2" fill="#9271B4" />
+      <rect width="32" height="32" rx="8" fill="#1B1A27" />
+      <rect x="7" y="7" width="8" height="8" rx="2" fill="#E8712A" />
+      <rect x="17" y="7" width="8" height="8" rx="2" fill="#1D9BD7" />
+      <rect x="7" y="17" width="8" height="8" rx="2" fill="#4F46E5" />
+      <rect x="17" y="17" width="8" height="8" rx="2" fill="#C23FC9" />
     </svg>
   );
 }

@@ -19,7 +19,7 @@ export default function CiteSection() {
   return (
     <section id="cite" className="section section-alt">
       <div className="wrap">
-        <SectionHead index="06" label="Cite" title="Citation" />
+        <SectionHead index="05" label="Cite" title="Citation" />
         <div className="cite-card">
           <button type="button" className="copy-btn" onClick={copy}>
             {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}

@@ -13,7 +13,6 @@ describe("site content", () => {
       "method",
       "results",
       "real-robot",
-      "limitations",
       "cite",
     ]);
   });

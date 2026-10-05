@@ -30,7 +30,7 @@ export default function OverviewSection() {
           <article className="card b-problem">
             <div className="big-stat">
               <p className="card-kicker">
-                <i className="kdot" style={{ ["--kc" as string]: "var(--gold)" }} />
+                <i className="kdot" style={{ ["--kc" as string]: "var(--orange)" }} />
                 The problem
               </p>
               <h3 className="card-title">A description can fit more than one person</h3>
@@ -91,7 +91,7 @@ export default function OverviewSection() {
 
           <article className="card b-cost">
             <p className="card-kicker">
-              <i className="kdot" style={{ ["--kc" as string]: "var(--blue)" }} />
+              <i className="kdot" style={{ ["--kc" as string]: "var(--sky)" }} />
               Cost
             </p>
             <h3 className="card-title">Encoded once, nothing extra at run time</h3>
@@ -135,7 +135,7 @@ export default function OverviewSection() {
 
           <article className="card b-speed">
             <p className="card-kicker">
-              <i className="kdot" style={{ ["--kc" as string]: "var(--blue)" }} />
+              <i className="kdot" style={{ ["--kc" as string]: "var(--sky)" }} />
               Speed
             </p>
             <h3 className="card-title">57 FPS on an RTX 4090</h3>
@@ -155,7 +155,7 @@ export default function OverviewSection() {
 
           <article className="card b-robot">
             <p className="card-kicker">
-              <i className="kdot" style={{ ["--kc" as string]: "var(--purple)" }} />
+              <i className="kdot" style={{ ["--kc" as string]: "var(--fuchsia)" }} />
               Real robot
             </p>
             <h3 className="card-title">From simulation to a Unitree G1, zero-shot</h3>

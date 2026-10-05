@@ -12,7 +12,7 @@ describe("Home page", () => {
       }),
     ).toBeInTheDocument();
 
-    for (const id of ["overview", "method", "results", "real-robot", "limitations", "cite"]) {
+    for (const id of ["overview", "method", "results", "real-robot", "cite"]) {
       expect(document.getElementById(id)).toBeInTheDocument();
     }
     expect(screen.getByRole("heading", { name: /EVT-Bench, three splits/i })).toBeInTheDocument();

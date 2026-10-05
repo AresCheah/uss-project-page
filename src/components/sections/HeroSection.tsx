@@ -10,10 +10,10 @@ const MODALITY_CLASS: Record<ModalityId, string> = {
 };
 
 const stats = [
-  { value: "320", unit: "", label: "zero-shot trials on a Unitree G1, with policies trained only in simulation", color: "var(--teal)" },
-  { value: "18", unit: "/ 20", label: "box-prompt successes with two people in black, against 9 / 20 for language", color: "var(--gold)" },
-  { value: "57", unit: "FPS", label: "for the language policy on an RTX 4090; MLLM trackers report 4.8–10", color: "var(--blue)" },
-  { value: "+34.1", unit: "SR", label: "points on EVT-Bench DT over the best prior non-MLLM tracker", color: "var(--purple)" },
+  { value: "320", unit: "", label: "zero-shot trials on a Unitree G1, with policies trained only in simulation", color: "var(--accent)" },
+  { value: "18", unit: "/ 20", label: "box-prompt successes with two people in black, against 9 / 20 for language", color: "var(--orange)" },
+  { value: "57", unit: "FPS", label: "for the language policy on an RTX 4090; MLLM trackers report 4.8–10", color: "var(--sky)" },
+  { value: "+34.1", unit: "SR", label: "points on EVT-Bench DT over the best prior non-MLLM tracker", color: "var(--fuchsia)" },
 ];
 
 function HeroReel() {
