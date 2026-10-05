@@ -2,23 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>USS · Unifying Spatial-Semantic Prompting for End to End Embodied Visual Tracking</title>
     <meta
       name="description"
-      content="USS project page: unifying spatial-semantic prompting for end-to-end embodied visual tracking, where text, a point, a box, and a mask are complementary ways to designate the target."
+      content="USS: text, a point, a box or a mask designate the target, and one end-to-end architecture maps any of them to egocentric waypoints. 320 zero-shot real-robot trials; best non-MLLM tracker on EVT-Bench at 57 FPS."
     />
-    <title>USS Project Page</title>
-    <script type="module">
-      if (import.meta.hot?.on) {
-        import.meta.hot.on('vite:error', (error) => {
-          if (error.err) {
-            console.error(
-              [error.err.message, error.err.frame].filter(Boolean).join('\n'),
-            )
-          }
-        })
-      }
+    <meta property="og:title" content="USS: Unifying Spatial-Semantic Prompting for End to End Embodied Visual Tracking" />
+    <meta property="og:description" content="Text, point, box or mask: one end-to-end architecture for embodied visual tracking." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+    <script>
+      // Apply a stored theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem("uss-theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
     </script>
   </head>
   <body>

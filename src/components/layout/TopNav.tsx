@@ -1,71 +1,98 @@
 import { useEffect, useState } from "react";
-import { Menu } from "lucide-react";
-import { pageSections } from "@/content/siteContent";
-import { cn } from "@/lib/utils";
+import { FileText, Menu, Moon, Sun } from "lucide-react";
+import { pageSections, siteContent } from "@/content/siteContent";
 import { useActiveSection } from "@/hooks/useActiveSection";
+import { useTheme } from "@/hooks/useTheme";
+
+const sectionIds = pageSections.map((section) => section.id);
+
+/** Four squares, one per prompt type, in the page's prompt colours. */
+export function BrandMark() {
+  return (
+    <svg className="brand-logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="#112B45" />
+      <rect x="7" y="7" width="8" height="8" rx="2" fill="#C58A24" />
+      <rect x="17" y="7" width="8" height="8" rx="2" fill="#3E83B5" />
+      <rect x="7" y="17" width="8" height="8" rx="2" fill="#148F86" />
+      <rect x="17" y="17" width="8" height="8" rx="2" fill="#9271B4" />
+    </svg>
+  );
+}
 
 export default function TopNav() {
-  const activeSection = useActiveSection(pageSections.map((section) => section.id));
-  const [progress, setProgress] = useState(0);
+  const active = useActiveSection(sectionIds);
+  const { theme, toggleTheme } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    let frame: number | null = null;
-
-    const update = () => {
-      frame = null;
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(scrollable > 0 ? Math.min(window.scrollY / scrollable, 1) : 0);
-    };
-
-    const onScroll = () => {
-      if (frame === null) frame = requestAnimationFrame(update);
-    };
-
-    update();
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      if (frame !== null) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
-      <div className="motion-fade-in mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-3 lg:px-8">
-        <a
-          href="#hero"
-          className="flex items-center gap-3 text-[11px] uppercase tracking-[0.32em] text-slate-500 transition hover:text-slate-900"
-        >
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600">
-            <Menu className="h-4 w-4" />
-          </span>
-          USS Project Page
-        </a>
-        <nav className="hidden items-center gap-1 rounded-full border border-slate-200 bg-white p-1 md:flex">
-          {pageSections.map((section) => (
-            <a
-              key={section.id}
-              href={`#${section.id}`}
-              className={cn(
-                "rounded-full px-3.5 py-2 text-[11px] tracking-[0.16em] text-slate-500 transition",
-                activeSection === section.id
-                  ? "bg-slate-900 text-white"
-                  : "hover:bg-slate-100 hover:text-slate-900",
-              )}
+    <>
+      <header className={`nav${scrolled ? " scrolled" : ""}`}>
+        <div className="nav-inner">
+          <a className="brand" href="#top" aria-label="USS, back to top">
+            <BrandMark />
+            <span className="brand-name">{siteContent.shortTitle}</span>
+          </a>
+          <nav className="nav-links" aria-label="Sections">
+            {pageSections.map((section) => (
+              <a key={section.id} href={`#${section.id}`} className={active === section.id ? "active" : undefined}>
+                {section.label}
+              </a>
+            ))}
+          </nav>
+          <div className="nav-actions">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
             >
-              {section.label}
+              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+            <details className="menu">
+              <summary className="icon-btn" aria-label="Sections">
+                <Menu size={18} />
+              </summary>
+              <nav className="menu-panel" aria-label="Sections">
+                {pageSections.map((section) => (
+                  <a
+                    key={section.id}
+                    href={`#${section.id}`}
+                    onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")}
+                  >
+                    {section.label}
+                  </a>
+                ))}
+              </nav>
+            </details>
+            <a className="btn btn-primary btn-sm" href={siteContent.links.pdf} target="_blank" rel="noreferrer">
+              <FileText size={15} aria-hidden="true" />
+              Paper
             </a>
-          ))}
-        </nav>
-      </div>
-      <div className="h-[2px] w-full bg-transparent" aria-hidden="true">
-        <div
-          className="h-full bg-[color:var(--cyan)] transition-[width] duration-150 ease-out"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
-    </header>
+          </div>
+        </div>
+      </header>
+
+      <ol className="rail" aria-label="Section progress">
+        {pageSections.map((section, i) => (
+          <li key={section.id}>
+            <a
+              href={`#${section.id}`}
+              className={active === section.id ? "active" : undefined}
+              aria-label={section.label}
+              title={section.label}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 }
